@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A futuristic personal portfolio for Aarnav Thakur, a 17-year-old student from Kolkata.">
+    <title>Aarnav Thakur | Personal Portfolio</title>
+    <link rel="preload" href="./assets/images/profile-family-hero.jpg" as="image">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+  </head>
+  <body>
+    <canvas id="starfield" aria-hidden="true"></canvas>
+    <div class="texture-noise" aria-hidden="true"></div>
+    <div class="aurora aurora-one" aria-hidden="true"></div>
+    <div class="aurora aurora-two" aria-hidden="true"></div>
+    <div class="aurora aurora-three" aria-hidden="true"></div>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <!-- EDIT: Replace this name/initials if you want a different public brand name. -->
+      <a class="brand" href="./index.html" aria-label="Aarnav Thakur home">
+        <span class="brand-mark">AT</span>
+        <span>Aarnav Thakur</span>
+      </a>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+
+      <nav class="nav-links" id="primary-navigation" aria-label="Primary navigation">
+        <a href="./index.html" aria-current="page">Home</a>
+        <a href="./interests.html">Interests</a>
+        <a href="./books.html">Books</a>
+        <a href="./places.html">Places</a>
+        <a href="./find-me.html">Find Me</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="page-shell hero" id="home">
+        <div class="hero-copy" data-reveal>
+          <p class="eyebrow">17 &middot; Kolkata &middot; Builder mode on</p>
+          <h1><span class="gradient-text">Aarnav Thakur</span></h1>
+          <p class="hero-lede">
+            I am a passionate coder, sports lover, creator, and learner from Kolkata, building ideas,
+            chasing better execution, and using AI like a launchpad for sharper work.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#about">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V8l8-4 8 4v12l-8-4-8 4Z"></path><path d="M12 4v12"></path><path d="m4 8 8 4 8-4"></path></svg>
+              Explore Story
+            </a>
+            <a class="button gold" href="https://www.youtube.com/@technosavvy4364" target="_blank" rel="noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8l6 4-6 4V8Z"></path><rect x="3" y="5" width="18" height="14" rx="3"></rect></svg>
+              Techno Savvy
+            </a>
+          </div>
+          <div class="meta-strip" aria-label="Quick profile facts">
+            <span class="meta-pill">Age 17</span>
+            <span class="meta-pill">Kolkata</span>
+            <span class="meta-pill">Coding</span>
+            <span class="meta-pill">Badminton Nationals U-15</span>
+          </div>
+        </div>
+
+        <div class="hero-visual" data-reveal>
+          <div class="portrait-frame">
+            <div class="portrait-orbit" aria-hidden="true"></div>
+            <figure class="portrait">
+              <!-- EDIT: Replace this image with your final hero/profile photo if needed. -->
+              <img src="./assets/images/profile-family-hero.jpg" alt="Aarnav with family in the hills">
+            </figure>
+          </div>
+          <div class="floating-badge">
+            <span>Focus</span>
+            <b>AI + Code</b>
+          </div>
+          <div class="hero-card">
+            <strong>Premium-tech portfolio</strong>
+            <p>Creative, confident, and built as a static site for GitHub Pages.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <section class="section page-shell" id="about">
+        <div class="section-heading" data-reveal>
+          <span class="section-kicker">About me</span>
+          <h2>Curious mind, fast learner, serious builder.</h2>
+          <p>
+            I like turning ideas into real things, learning in public, and keeping my momentum high.
+          </p>
+        </div>
+
+        <div class="about-grid">
+          <article class="glass-card mini-profile" data-reveal>
+            <div class="mini-profile-content">
+              <strong>Kolkata-based student</strong>
+              <p>Young, ambitious, and always looking for the next skill to unlock.</p>
+            </div>
+          </article>
+
+          <article class="glass-card about-copy delay-1" data-reveal>
+            <p>
+              I am 17 years old and live in Kolkata. Coding is one of the biggest parts of my life because it
+              lets me build, experiment, and solve problems in a way that feels creative.
+            </p>
+            <p>
+              I have already created many builds in the past, and every new experiment teaches me something about
+              discipline, taste, and execution. I use AI tools like ChatGPT, Claude, Grok, and Codex to stay
+              productive, think faster, and turn rough ideas into polished results.
+            </p>
+            <div class="skills-cloud" aria-label="AI tools">
+              <span class="chip">ChatGPT</span>
+              <span class="chip">Claude</span>
+              <span class="chip">Grok</span>
+              <span class="chip">Codex</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section page-shell" id="skills">
+        <div class="section-heading center" data-reveal>
+          <span class="section-kicker">Skills and interests</span>
+          <h2>Where energy turns into output.</h2>
+          <p>Creative interests, athletic discipline, and builder habits, all feeding the same direction.</p>
+        </div>
+
+        <div class="grid four">
+          <article class="feature-card" data-reveal>
+            <div class="feature-icon">01</div>
+            <h3>Coding</h3>
+            <p>Building clean, useful experiences and learning by making real things.</p>
+          </article>
+          <article class="feature-card delay-1" data-reveal>
+            <div class="feature-icon">02</div>
+            <h3>Idea building</h3>
+            <p>Turning ideas into finished demos with design, logic, and polish.</p>
+          </article>
+          <article class="feature-card delay-2" data-reveal>
+            <div class="feature-icon">03</div>
+            <h3>Problem solving</h3>
+            <p>Breaking complex challenges into smaller moves and staying consistent.</p>
+          </article>
+          <article class="feature-card delay-3" data-reveal>
+            <div class="feature-icon">04</div>
+            <h3>AI productivity</h3>
+            <p>Using modern AI tools to learn faster, plan better, and create more.</p>
+          </article>
+          <article class="feature-card" data-reveal>
+            <div class="feature-icon">05</div>
+            <h3>Sports</h3>
+            <p>Football, basketball, and badminton keep the competitive side sharp.</p>
+          </article>
+          <article class="feature-card delay-1" data-reveal>
+            <div class="feature-icon">06</div>
+            <h3>Guitar</h3>
+            <p>Music gives a different kind of focus: rhythm, patience, and expression.</p>
+          </article>
+          <article class="feature-card delay-2" data-reveal>
+            <div class="feature-icon">07</div>
+            <h3>Content creation</h3>
+            <p>Making videos, sharing experiments, and building confidence on camera.</p>
+          </article>
+          <article class="feature-card delay-3" data-reveal>
+            <div class="feature-icon">08</div>
+            <h3>Learning</h3>
+            <p>Staying open, upgrading skills, and keeping curiosity alive.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section page-shell" id="sports">
+        <div class="sports-stage">
+          <article class="glass-card sports-panel" data-reveal>
+            <span class="section-kicker">Sports</span>
+            <h2>Competitive energy, trained early.</h2>
+            <p>
+              Sports are not just hobbies for me. They built my discipline, reflexes, patience, and hunger to
+              improve. Football and basketball bring pace; badminton brings precision.
+            </p>
+            <div class="sports-list">
+              <div class="sport-row"><strong>Football</strong><span>Speed + teamwork</span></div>
+              <div class="sport-row"><strong>Basketball</strong><span>Explosive focus</span></div>
+              <div class="sport-row"><strong>Badminton</strong><span>Nationals U-15</span></div>
+            </div>
+          </article>
+          <aside class="glass-card achievement-ring delay-1" data-reveal>
+            <div class="ring">
+              <div class="ring-content">
+                <b>U-15</b>
+                <span>Badminton Nationals</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section page-shell" id="guitar">
+        <div class="section-heading" data-reveal>
+          <span class="section-kicker">Music and guitar</span>
+          <h2>Playing strings, building rhythm.</h2>
+          <p>
+            Guitar gives the portfolio a softer edge: practice, expression, and a channel ready to grow.
+          </p>
+        </div>
+
+        <div class="media-split">
+          <article class="glass-card channel-card" data-reveal>
+            <figure class="channel-avatar">
+              <!-- EDIT: Replace with your guitar channel profile picture later if you want a separate avatar. -->
+              <img src="./assets/images/profile-family-hero.jpg" alt="Profile photo for the guitar channel">
+            </figure>
+            <div>
+              <span class="section-kicker">Guitar channel</span>
+              <h3>Play With Aarnav</h3>
+              <p>Channel link is live now; featured clips can be embedded here once video IDs are added.</p>
+            </div>
+            <a class="button primary" href="https://www.youtube.com/@playwithaarnav" target="_blank" rel="noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8l6 4-6 4V8Z"></path><rect x="3" y="5" width="18" height="14" rx="3"></rect></svg>
+              Visit channel
+            </a>
+          </article>
+
+          <div class="video-rail-wrap" data-reveal>
+            <div class="rail-toolbar" aria-label="Guitar video controls">
+              <button class="icon-button" type="button" data-rail-prev="#guitarRail" aria-label="Previous guitar video">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+              </button>
+              <button class="icon-button" type="button" data-rail-next="#guitarRail" aria-label="Next guitar video">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+            </div>
+            <div class="video-rail" id="guitarRail">
+              <!-- YOUTUBE: Replace VIDEO_ID_HERE with the ID from a YouTube URL to make tiles play in-page. -->
+              <article class="video-card" tabindex="0" data-title="Guitar Cover Slot 01" data-video-id="VIDEO_ID_HERE" data-channel-url="https://www.youtube.com/@playwithaarnav">
+                <div class="video-visual"><span class="play-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></span></div>
+                <div class="video-content"><h3>Featured cover</h3><p>A premium tile for your first highlighted guitar video.</p></div>
+              </article>
+              <article class="video-card" tabindex="0" data-title="Guitar Practice Clip" data-video-id="VIDEO_ID_HERE" data-channel-url="https://www.youtube.com/@playwithaarnav">
+                <div class="video-visual"><span class="play-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></span></div>
+                <div class="video-content"><h3>Practice session</h3><p>For a short clip, riff, lesson, or behind-the-scenes moment.</p></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section page-shell" id="youtube">
+        <div class="section-heading" data-reveal>
+          <span class="section-kicker">YouTube journey</span>
+          <h2>Started in 6th grade, still evolving.</h2>
+          <p>
+            Content creation began early for me. The section is now clean and focused on the channel story,
+            with room to bring featured videos back later.
+          </p>
+        </div>
+
+        <article class="glass-card" data-reveal>
+          <h3>Techno Savvy is ready for its next chapter.</h3>
+          <p>
+            The channel began early and keeps growing with curiosity, experimentation, and confidence.
+            Featured video tiles can return later when you choose the exact clips.
+          </p>
+          <div class="section-actions" style="margin-top: 1rem;">
+            <a class="button primary" href="https://www.youtube.com/@technosavvy4364" target="_blank" rel="noreferrer">Open Techno Savvy</a>
+          </div>
+        </article>
+      </section>
+
+      <section class="section page-shell" id="books">
+        <div class="section-heading" data-reveal>
+          <span class="section-kicker">Books read</span>
+          <h2>Small reviews, real takeaways.</h2>
+          <p>Books that shaped discipline, imagination, warmth, and the adventure side of learning.</p>
+        </div>
+
+        <div class="grid four">
+          <article class="book-card" data-reveal>
+            <figure class="book-cover"><img src="./assets/images/book-atomic-habits.webp" alt="Atomic Habits book cover"></figure>
+            <div class="book-content">
+              <span class="book-meta">Habits</span>
+              <h3>Atomic Habits</h3>
+              <p>A practical reminder that big change usually starts with tiny systems repeated honestly.</p>
+            </div>
+          </article>
+          <article class="book-card delay-1" data-reveal>
+            <figure class="book-cover"><img src="./assets/images/book-roald-dahl.jpg" alt="Roald Dahl book image"></figure>
+            <div class="book-content">
+              <span class="book-meta">Imagination</span>
+              <h3>Roald Dahl</h3>
+              <p>Playful, strange, and sharp, his stories make imagination feel fearless.</p>
+            </div>
+          </article>
+          <article class="book-card delay-2" data-reveal>
+            <figure class="book-cover"><img src="./assets/images/book-sudha-murty.webp" alt="Sudha Murty book image"></figure>
+            <div class="book-content">
+              <span class="book-meta">Values</span>
+              <h3>Sudha Murty</h3>
+              <p>Simple stories with kindness, humility, and life lessons that stay quietly useful.</p>
+            </div>
+          </article>
+          <article class="book-card delay-3" data-reveal>
+            <figure class="book-cover"><img src="./assets/images/book-treasure-island.jpg" alt="Treasure Island book cover"></figure>
+            <div class="book-content">
+              <span class="book-meta">Adventure</span>
+              <h3>Treasure Island</h3>
+              <p>A classic adventure that still feels fast, risky, and full of old-school courage.</p>
+            </div>
+          </article>
+        </div>
+        <div class="section-actions" style="margin-top: 1rem;">
+          <a class="button primary" href="./books.html">Open books page</a>
+        </div>
+      </section>
+
+      <section class="section page-shell" id="places">
+        <div class="section-heading" data-reveal>
+          <span class="section-kicker">Places visited</span>
+          <h2>Travel notes from beaches, hills, temples, and city lights.</h2>
+          <p>Each place gets an image, a memory, and a polished card that can grow over time.</p>
+        </div>
+
+        <div class="grid three">
+          <article class="place-card" data-reveal>
+            <figure class="place-image"><img src="./assets/images/place-havelock.jpg" alt="Havelock Island memory"></figure>
+            <div class="place-content"><span class="place-meta">Andaman</span><h3>Havelock Island</h3><p>Blue water, calm beaches, and that rare feeling of the world slowing down.</p></div>
+          </article>
+          <article class="place-card delay-1" data-reveal>
+            <figure class="place-image"><img src="./assets/images/place-darjeeling.jpg" alt="Darjeeling hills"></figure>
+            <div class="place-content"><span class="place-meta">West Bengal</span><h3>Darjeeling</h3><p>Misty hills, tea-garden air, and a mountain mood that feels cinematic.</p></div>
+          </article>
+          <article class="place-card delay-2" data-reveal>
+            <figure class="place-image"><img src="./assets/images/place-marina.jpg" alt="Marina Beach"></figure>
+            <div class="place-content"><span class="place-meta">Chennai</span><h3>Marina Beach</h3><p>A wide coastline with big-city energy and a horizon that opens the mind.</p></div>
+          </article>
+        </div>
+        <div class="section-actions" style="margin-top: 1rem;">
+          <a class="button primary" href="./places.html">Open places page</a>
+        </div>
+      </section>
+
+      <section class="section page-shell" id="contact">
+        <div class="quote-band" data-reveal>
+          <p>Building my future one practice session, match, book, upload, and idea at a time.</p>
+          <a class="button gold" href="./find-me.html">Find me online</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Made for GitHub Pages with static HTML, CSS, JavaScript, and local assets.</p>
+    </footer>
+
+    <audio id="bgm" src="./assets/audio/minecraft-theme.mp3" loop preload="none"></audio>
+    <div class="floating-actions" aria-label="Quick actions">
+      <button class="icon-button audio-toggle" type="button" aria-label="Play background music">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"></path><circle cx="7" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>
+      </button>
+      <button class="icon-button instagram-float" type="button" aria-label="Open Instagram card">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.3"></circle><path d="M17.5 6.5h.01"></path></svg>
+      </button>
+      <div class="insta-popover">
+        <!-- EDIT: Replace Instagram link or handle here if it changes. -->
+        <strong>@aarnav_thakurr</strong>
+        <p>Instagram page for updates, moments, and creative work.</p>
+        <a class="button primary" href="https://www.instagram.com/aarnav_thakurr/" target="_blank" rel="noreferrer">Open Instagram</a>
+      </div>
+    </div>
+
+    <section class="video-modal" id="videoModal" aria-hidden="true">
+      <div class="video-modal__backdrop" data-close-video></div>
+      <div class="video-modal__panel" role="dialog" aria-modal="true" aria-label="Video player">
+        <button class="modal-close" type="button" data-close-video aria-label="Close video">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+        <div id="videoModalBody"></div>
+      </div>
+    </section>
+
+    <script src="./assets/js/main.js"></script>
+  </body>
+</html>

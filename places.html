@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Places visited by Aarnav Thakur with polished personal memory notes.">
+    <title>Places Visited | Aarnav Thakur</title>
+    <link rel="stylesheet" href="./assets/css/styles.css">
+  </head>
+  <body>
+    <canvas id="starfield" aria-hidden="true"></canvas>
+    <div class="texture-noise" aria-hidden="true"></div>
+    <div class="aurora aurora-one" aria-hidden="true"></div>
+    <div class="aurora aurora-two" aria-hidden="true"></div>
+    <div class="aurora aurora-three" aria-hidden="true"></div>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="Aarnav Thakur home">
+        <span class="brand-mark">AT</span>
+        <span>Aarnav Thakur</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <nav class="nav-links" id="primary-navigation" aria-label="Primary navigation">
+        <a href="./index.html">Home</a>
+        <a href="./interests.html">Interests</a>
+        <a href="./books.html">Books</a>
+        <a href="./places.html" aria-current="page">Places</a>
+        <a href="./find-me.html">Find Me</a>
+      </nav>
+    </header>
+
+    <main id="main" class="page-shell">
+      <section class="page-hero wide" data-reveal>
+        <span class="section-kicker">Places visited</span>
+        <h1><span class="gradient-text">Memories with texture, light, and story.</span></h1>
+        <p>
+          A travel wall for beaches, islands, hills, temples, palaces, parks, and city coastlines,
+          built with local images and short original notes.
+        </p>
+      </section>
+
+      <section class="section compact">
+        <div class="grid three">
+          <article class="place-card" data-reveal>
+            <figure class="place-image">
+              <img src="./assets/images/place-havelock.jpg" alt="Havelock Island">
+            </figure>
+            <div class="place-content">
+              <span class="place-meta">Swaraj Dweep &middot; Andaman</span>
+              <h3>Havelock Island</h3>
+              <p>
+                A calm island memory: clear water, soft sand, and beaches that feel almost unreal.
+                It has that rare travel mood where everything becomes slower and sharper at once.
+              </p>
+            </div>
+          </article>
+
+          <article class="place-card delay-1" data-reveal>
+            <figure class="place-image">
+              <img src="./assets/images/place-neil.jpg" alt="Neil Island">
+            </figure>
+            <div class="place-content">
+              <span class="place-meta">Shaheed Dweep &middot; Andaman</span>
+              <h3>Neil Island</h3>
+              <p>
+                Neil Island felt quieter and more peaceful, with a simple island rhythm. It is the
+                kind of place that makes nature feel close and the day feel unhurried.
+              </p>
+            </div>
+          </article>
+
+          <article class="place-card delay-2" data-reveal>
+            <figure class="place-image">
+              <img src="./assets/images/place-rameshwaram-temple.jpg" alt="Rameshwar Temple">
+            </figure>
+            <div class="place-content">
+              <span class="place-meta">Rameswaram &middot; Tamil Nadu</span>
+              <h3>Rameshwar Temple</h3>
+              <p>
+                The Ramanathaswamy Temple carries a deep spiritual atmosphere. Its long corridors and
+                ancient energy make the visit feel grand, quiet, and unforgettable.
+              </p>
+            </div>
+          </article>
+
+          <article class="place-card" data-reveal>
+            <figure class="place-image">
+              <img src="./assets/images/place-darbhanga.jpg" alt="Darbhanga Maharaj Mahal">
+            </figure>
+            <div class="place-content">
+              <span class="place-meta">Darbhanga &middot; Bihar</span>
+              <h3>Darbhanga Maharaj Mahal</h3>
+              <p>
+                A place with royal character and old-world presence. The Darbhanga Raj legacy gives
+                the area a strong sense of history, culture, and Mithila pride.
+              </p>
+            </div>
+          </article>
+
+          <article class="place-card delay-1" data-reveal>
+            <figure class="place-image">
+              <img src="./assets/images/place-darjeeling.jpg" alt="Darjeeling hills">
+            </figure>
+            <div class="place-content">
+              <span class="place-meta">Himalayan hills &middot; West Bengal</span>
+              <h3>Darjeeling</h3>
+              <p>
+                Mist, tea gardens, cool air, and mountain views make Darjeeling feel cinematic.
+                It is peaceful but alive, especially when the hills open up on a clear day.
+              </p>
+            </div>
+          </article>
+
+          <article class="place-card delay-2" data-reveal>
+            <figure class="place-image">
+              <img src="./assets/images/place-eco-park.jpg" alt="Eco Park Kolkata">
+            </figure>
+            <div class="place-content">
+              <span class="place-meta">New Town &middot; Kolkata</span>
+              <h3>Eco Park</h3>
+              <p>
+                Eco Park feels like a modern green escape inside the city, with open spaces, themed
+                zones, and a relaxed Kolkata weekend atmosphere.
+              </p>
+            </div>
+          </article>
+
+          <article class="place-card" data-reveal>
+            <figure class="place-image">
+              <img src="./assets/images/place-marina.jpg" alt="Marina Beach Chennai">
+            </figure>
+            <div class="place-content">
+              <span class="place-meta">Chennai &middot; Bay of Bengal</span>
+              <h3>Marina Beach</h3>
+              <p>
+                Marina Beach has a huge coastal presence: wide sand, strong sea air, and the feeling
+                of a city meeting the horizon in one long sweep.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section compact">
+        <div class="quote-band" data-reveal>
+          <p>
+            These places are more than check-ins. They are visual memories: water, hills, temples,
+            architecture, parks, and coastlines that add scale to life.
+          </p>
+          <a class="button primary" href="./index.html#places">Back home</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Travel cards use local images, captions, and hover zoom effects.</p>
+    </footer>
+
+    <audio id="bgm" src="./assets/audio/minecraft-theme.mp3" loop preload="none"></audio>
+    <div class="floating-actions" aria-label="Quick actions">
+      <button class="icon-button audio-toggle" type="button" aria-label="Play background music">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"></path><circle cx="7" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>
+      </button>
+      <button class="icon-button instagram-float" type="button" aria-label="Open Instagram card">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.3"></circle><path d="M17.5 6.5h.01"></path></svg>
+      </button>
+      <div class="insta-popover">
+        <strong>@aarnav_thakurr</strong>
+        <p>Instagram page for updates, moments, and creative work.</p>
+        <a class="button primary" href="https://www.instagram.com/aarnav_thakurr/" target="_blank" rel="noreferrer">Open Instagram</a>
+      </div>
+    </div>
+
+    <section class="video-modal" id="videoModal" aria-hidden="true">
+      <div class="video-modal__backdrop" data-close-video></div>
+      <div class="video-modal__panel" role="dialog" aria-modal="true" aria-label="Video player">
+        <button class="modal-close" type="button" data-close-video aria-label="Close video">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+        <div id="videoModalBody"></div>
+      </div>
+    </section>
+
+    <script src="./assets/js/main.js"></script>
+  </body>
+</html>

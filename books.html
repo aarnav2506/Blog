@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Books read by Aarnav Thakur with short personal reviews.">
+    <title>Books Read | Aarnav Thakur</title>
+    <link rel="stylesheet" href="./assets/css/styles.css">
+  </head>
+  <body>
+    <canvas id="starfield" aria-hidden="true"></canvas>
+    <div class="texture-noise" aria-hidden="true"></div>
+    <div class="aurora aurora-one" aria-hidden="true"></div>
+    <div class="aurora aurora-two" aria-hidden="true"></div>
+    <div class="aurora aurora-three" aria-hidden="true"></div>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="Aarnav Thakur home">
+        <span class="brand-mark">AT</span>
+        <span>Aarnav Thakur</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <nav class="nav-links" id="primary-navigation" aria-label="Primary navigation">
+        <a href="./index.html">Home</a>
+        <a href="./interests.html">Interests</a>
+        <a href="./books.html" aria-current="page">Books</a>
+        <a href="./places.html">Places</a>
+        <a href="./find-me.html">Find Me</a>
+      </nav>
+    </header>
+
+    <main id="main" class="page-shell">
+      <section class="page-hero" data-reveal>
+        <span class="section-kicker">Books read</span>
+        <h1><span class="gradient-text">Lessons, imagination, and adventure.</span></h1>
+        <p>
+          A compact reading shelf with short personal reviews: useful ideas, playful fiction,
+          Indian storytelling, and classic adventure energy.
+        </p>
+      </section>
+
+      <section class="section compact">
+        <div class="grid two">
+          <article class="book-card" data-reveal>
+            <figure class="book-cover">
+              <img src="./assets/images/book-atomic-habits.webp" alt="Atomic Habits book cover">
+            </figure>
+            <div class="book-content">
+              <span class="book-meta">James Clear &middot; Self-improvement</span>
+              <h3>Atomic Habits</h3>
+              <p>
+                This book made discipline feel less dramatic and more practical. I like the idea that
+                small systems, repeated daily, can quietly change the direction of your life.
+              </p>
+            </div>
+          </article>
+
+          <article class="book-card delay-1" data-reveal>
+            <figure class="book-cover">
+              <img src="./assets/images/book-roald-dahl.jpg" alt="Roald Dahl book image">
+            </figure>
+            <div class="book-content">
+              <span class="book-meta">Roald Dahl &middot; Imagination</span>
+              <h3>Roald Dahl</h3>
+              <p>
+                Dahl's stories feel mischievous, bold, and impossible to predict. They remind me that
+                creativity works best when it is brave enough to be a little strange.
+              </p>
+            </div>
+          </article>
+
+          <article class="book-card delay-2" data-reveal>
+            <figure class="book-cover">
+              <img src="./assets/images/book-sudha-murty.webp" alt="Sudha Murty book image">
+            </figure>
+            <div class="book-content">
+              <span class="book-meta">Sudha Murty &middot; Values</span>
+              <h3>Sudha Murty</h3>
+              <p>
+                Her writing has a simple, grounded warmth. The stories often feel close to real life,
+                with lessons about kindness, honesty, humility, and responsibility.
+              </p>
+            </div>
+          </article>
+
+          <article class="book-card delay-3" data-reveal>
+            <figure class="book-cover">
+              <img src="./assets/images/book-treasure-island.jpg" alt="Treasure Island book cover">
+            </figure>
+            <div class="book-content">
+              <span class="book-meta">Robert Louis Stevenson &middot; Adventure</span>
+              <h3>Treasure Island</h3>
+              <p>
+                A classic adventure that still moves fast. The map, the sea, and the danger make it
+                feel like a reminder that courage is built during uncertain journeys.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section compact">
+        <div class="quote-band" data-reveal>
+          <p>
+            Reading gives me extra lives: discipline from non-fiction, imagination from stories,
+            and a better sense of the kind of person I want to become.
+          </p>
+          <a class="button primary" href="./index.html#books">Back home</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Book cards use local images and short original reviews.</p>
+    </footer>
+
+    <audio id="bgm" src="./assets/audio/minecraft-theme.mp3" loop preload="none"></audio>
+    <div class="floating-actions" aria-label="Quick actions">
+      <button class="icon-button audio-toggle" type="button" aria-label="Play background music">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"></path><circle cx="7" cy="18" r="3"></circle><circle cx="17" cy="16" r="3"></circle></svg>
+      </button>
+      <button class="icon-button instagram-float" type="button" aria-label="Open Instagram card">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.3"></circle><path d="M17.5 6.5h.01"></path></svg>
+      </button>
+      <div class="insta-popover">
+        <strong>@aarnav_thakurr</strong>
+        <p>Instagram page for updates, moments, and creative work.</p>
+        <a class="button primary" href="https://www.instagram.com/aarnav_thakurr/" target="_blank" rel="noreferrer">Open Instagram</a>
+      </div>
+    </div>
+
+    <section class="video-modal" id="videoModal" aria-hidden="true">
+      <div class="video-modal__backdrop" data-close-video></div>
+      <div class="video-modal__panel" role="dialog" aria-modal="true" aria-label="Video player">
+        <button class="modal-close" type="button" data-close-video aria-label="Close video">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+        <div id="videoModalBody"></div>
+      </div>
+    </section>
+
+    <script src="./assets/js/main.js"></script>
+  </body>
+</html>
