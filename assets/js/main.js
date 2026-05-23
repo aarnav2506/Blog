@@ -173,12 +173,27 @@ const audio = document.querySelector("#bgm");
 const audioToggle = document.querySelector(".audio-toggle");
 
 if (audio && audioToggle) {
+  const audioPlaylist = [
+    "./assets/audio/minecraft-theme.mp3",
+    "./assets/audio/1-07. Haggstrom.mp3",
+  ];
   const audioStateKey = "aarnav-bgm-state";
+  const audioTrackKey = "aarnav-bgm-track";
   const audioTimeKey = "aarnav-bgm-time";
   let isLeavingPage = false;
+  let isChangingTrack = false;
 
   audio.volume = 0.26;
   audio.preload = "auto";
+  audio.loop = false;
+
+  const getSavedTrackIndex = () => {
+    const savedIndex = Number.parseInt(localStorage.getItem(audioTrackKey) || "0", 10);
+    return Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < audioPlaylist.length ? savedIndex : 0;
+  };
+
+  let currentTrackIndex = getSavedTrackIndex();
+  audio.src = audioPlaylist[currentTrackIndex];
 
   const syncAudioButton = (isPlaying) => {
     audioToggle.classList.toggle("is-playing", isPlaying);
@@ -187,6 +202,8 @@ if (audio && audioToggle) {
   };
 
   const saveAudioTime = () => {
+    localStorage.setItem(audioTrackKey, String(currentTrackIndex));
+
     if (Number.isFinite(audio.currentTime)) {
       localStorage.setItem(audioTimeKey, String(audio.currentTime));
     }
@@ -198,6 +215,25 @@ if (audio && audioToggle) {
 
     const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null;
     audio.currentTime = duration ? savedTime % duration : savedTime;
+  };
+
+  const loadTrack = (trackIndex, { restoreTime = false } = {}) => {
+    isChangingTrack = true;
+    currentTrackIndex = (trackIndex + audioPlaylist.length) % audioPlaylist.length;
+    audio.src = audioPlaylist[currentTrackIndex];
+    localStorage.setItem(audioTrackKey, String(currentTrackIndex));
+
+    if (restoreTime) {
+      if (audio.readyState >= 1) {
+        restoreAudioTime();
+      } else {
+        audio.addEventListener("loadedmetadata", restoreAudioTime, { once: true });
+      }
+    } else {
+      localStorage.setItem(audioTimeKey, "0");
+    }
+
+    isChangingTrack = false;
   };
 
   if (audio.readyState >= 1) {
@@ -233,8 +269,12 @@ if (audio && audioToggle) {
 
   audio.addEventListener("play", () => syncAudioButton(true));
   audio.addEventListener("timeupdate", saveAudioTime);
+  audio.addEventListener("ended", () => {
+    loadTrack(currentTrackIndex + 1);
+    playBackgroundMusic();
+  });
   audio.addEventListener("pause", () => {
-    if (isLeavingPage) return;
+    if (isLeavingPage || isChangingTrack || audio.ended) return;
     saveAudioTime();
     localStorage.setItem(audioStateKey, "paused");
     syncAudioButton(false);
