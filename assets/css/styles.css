@@ -1352,6 +1352,95 @@ h1 {
   animation-delay: 0.6s;
 }
 
+.audio-popover {
+  position: absolute;
+  right: 0;
+  bottom: 7.25rem;
+  width: min(82vw, 310px);
+  padding: 1rem;
+  border: 1px solid rgba(123, 232, 255, 0.2);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(123, 232, 255, 0.15), transparent 9rem),
+    rgba(8, 11, 27, 0.92);
+  box-shadow: var(--shadow), 0 0 34px rgba(123, 232, 255, 0.14);
+  backdrop-filter: blur(24px);
+  opacity: 0;
+  transform: translateY(0.8rem) scale(0.96);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.audio-popover.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.audio-popover strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.audio-popover p {
+  margin: 0 0 0.8rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.audio-track-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.audio-track,
+.audio-pause-control {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.audio-track {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.62rem 0.72rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.audio-track span {
+  color: var(--gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+}
+
+.audio-track:hover,
+.audio-track:focus-visible,
+.audio-pause-control:hover,
+.audio-pause-control:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(123, 232, 255, 0.34);
+  background: rgba(123, 232, 255, 0.1);
+}
+
+.audio-track.is-active {
+  border-color: rgba(114, 255, 188, 0.42);
+  background: rgba(114, 255, 188, 0.12);
+}
+
+.audio-pause-control {
+  margin-top: 0.75rem;
+  padding: 0.68rem 0.78rem;
+  text-align: center;
+  font-weight: 900;
+}
+
 @keyframes beacon-pulse {
   0%,
   100% {
