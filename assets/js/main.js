@@ -13,6 +13,91 @@ const titleIconHref = "./assets/images/at-favicon-zoomed.png";
   iconLink.href = titleIconHref;
 });
 
+document.querySelectorAll(".channel-avatar img").forEach((image) => {
+  image.src = "./assets/images/youtube-play-with-aarnav.jpg";
+  image.alt = "Play With Aarnav YouTube channel photo";
+});
+
+const currentPage = window.location.pathname.split("/").pop() || "index.html";
+
+if (currentPage === "books.html") {
+  document.querySelectorAll(".grid").forEach((grid) => {
+    const hasBookCards = grid.querySelector(".book-card");
+    const hasTreasureIsland = Array.from(grid.querySelectorAll(".book-card h3")).some((heading) => heading.textContent.trim() === "Treasure Island");
+    const hasSherlockHolmes = Array.from(grid.querySelectorAll(".book-card h3")).some((heading) => heading.textContent.trim() === "Sherlock Holmes");
+
+    if (!hasBookCards || !hasTreasureIsland || hasSherlockHolmes) return;
+
+    const card = document.createElement("article");
+    card.className = "book-card delay-4";
+    card.dataset.reveal = "";
+    card.innerHTML = `
+      <figure class="book-cover">
+        <img src="./assets/images/sherlock homes.jpg" alt="Sherlock Holmes book cover">
+      </figure>
+      <div class="book-content">
+        <span class="book-meta">Arthur Conan Doyle &middot; Mystery</span>
+        <h3>Sherlock Holmes</h3>
+        <p>A detective classic full of observation, logic, and sharp twists. Holmes makes problem-solving feel clever, calm, and exciting.</p>
+      </div>
+    `;
+    grid.append(card);
+  });
+}
+
+if (currentPage === "places.html") {
+  const placesGrid = document.querySelector(".grid.three");
+  const existingPlaces = new Set(Array.from(document.querySelectorAll(".place-card h3")).map((heading) => heading.textContent.trim()));
+  const placesToAdd = [
+    {
+      className: "place-card delay-1",
+      image: "./assets/images/belur muth.jpg",
+      alt: "Belur Math",
+      meta: "Belur Math &middot; Kolkata",
+      title: "Belur Math",
+      copy: "A peaceful riverside landmark with grand architecture, calm gardens, and a spiritual atmosphere that feels steady and reflective.",
+    },
+    {
+      className: "place-card delay-2",
+      image: "./assets/images/daksh mandir.jpg",
+      alt: "Dakshineswar Kali Temple",
+      meta: "Dakshineswar &middot; Kolkata",
+      title: "Dakshineswar Kali Temple",
+      copy: "A powerful temple visit with classic Bengal architecture, devotional energy, and the Hooghly river adding a quiet sense of scale.",
+    },
+    {
+      className: "place-card",
+      image: "./assets/images/victorial memorial.jpg",
+      alt: "Victoria Memorial",
+      meta: "Maidan &middot; Kolkata",
+      title: "Victoria Memorial",
+      copy: "One of Kolkata's most iconic sights, with white marble, open lawns, and a historic mood that feels royal, cinematic, and timeless.",
+    },
+  ];
+
+  if (placesGrid) {
+    placesToAdd.forEach((place) => {
+      if (existingPlaces.has(place.title)) return;
+
+      const card = document.createElement("article");
+      card.className = place.className;
+      card.dataset.reveal = "";
+      card.innerHTML = `
+        <figure class="place-image">
+          <img src="${place.image}" alt="${place.alt}">
+        </figure>
+        <div class="place-content">
+          <span class="place-meta">${place.meta}</span>
+          <h3>${place.title}</h3>
+          <p>${place.copy}</p>
+        </div>
+      `;
+      placesGrid.append(card);
+      existingPlaces.add(place.title);
+    });
+  }
+}
+
 const navToggle = document.querySelector(".nav-toggle");
 const navLinks = document.querySelector(".nav-links");
 
