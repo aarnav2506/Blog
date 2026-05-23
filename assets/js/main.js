@@ -171,21 +171,40 @@ if (!prefersReducedMotion) {
 
 const audio = document.querySelector("#bgm");
 const audioToggle = document.querySelector(".audio-toggle");
+let pauseBackgroundMusicForVideo = () => {};
+let resumeBackgroundMusicAfterVideo = () => {};
 
 if (audio && audioToggle) {
   const audioPlaylist = [
-    "./assets/audio/minecraft-theme.mp3",
-    "./assets/audio/1-07. Haggstrom.mp3",
+    { title: "Minecraft Theme", src: "./assets/audio/minecraft-theme.mp3" },
+    { title: "Subwoofer Lullaby", src: "./assets/audio/1-03. Subwoofer Lullaby.mp3" },
+    { title: "Haggstrom", src: "./assets/audio/1-07. Haggstrom.mp3" },
+    { title: "Biome Fest", src: "./assets/audio/2-08. Biome Fest.mp3" },
   ];
   const audioStateKey = "aarnav-bgm-state";
   const audioTrackKey = "aarnav-bgm-track";
   const audioTimeKey = "aarnav-bgm-time";
   let isLeavingPage = false;
   let isChangingTrack = false;
+  let isVideoPausingMusic = false;
+  let shouldResumeAfterVideo = false;
 
   audio.volume = 0.26;
   audio.preload = "auto";
   audio.loop = false;
+
+  const audioPopover = document.createElement("div");
+  audioPopover.className = "audio-popover";
+  audioPopover.innerHTML = `
+    <strong>Music queue</strong>
+    <p>Choose a track. The playlist keeps looping all four songs.</p>
+    <div class="audio-track-list"></div>
+    <button class="audio-pause-control" type="button">Pause music</button>
+  `;
+  audioToggle.insertAdjacentElement("afterend", audioPopover);
+
+  const audioTrackList = audioPopover.querySelector(".audio-track-list");
+  const audioPauseControl = audioPopover.querySelector(".audio-pause-control");
 
   const getSavedTrackIndex = () => {
     const savedIndex = Number.parseInt(localStorage.getItem(audioTrackKey) || "0", 10);
@@ -193,12 +212,43 @@ if (audio && audioToggle) {
   };
 
   let currentTrackIndex = getSavedTrackIndex();
-  audio.src = audioPlaylist[currentTrackIndex];
+  audio.src = audioPlaylist[currentTrackIndex].src;
 
   const syncAudioButton = (isPlaying) => {
     audioToggle.classList.toggle("is-playing", isPlaying);
     audioToggle.classList.toggle("needs-tap", false);
-    audioToggle.setAttribute("aria-label", isPlaying ? "Pause background music" : "Play background music");
+    audioToggle.setAttribute("aria-label", isPlaying ? "Open music controls" : "Play background music");
+  };
+
+  const syncAudioPopover = () => {
+    audioPopover.querySelectorAll(".audio-track").forEach((button, index) => {
+      button.classList.toggle("is-active", index === currentTrackIndex);
+      button.setAttribute("aria-current", index === currentTrackIndex ? "true" : "false");
+    });
+
+    if (audioPauseControl) {
+      audioPauseControl.textContent = audio.paused ? "Resume music" : "Pause music";
+    }
+  };
+
+  if (audioTrackList) {
+    audioTrackList.innerHTML = audioPlaylist
+      .map((track, index) => `<button class="audio-track" type="button" data-track-index="${index}"><span>${String(index + 1).padStart(2, "0")}</span>${track.title}</button>`)
+      .join("");
+  }
+
+  const openAudioPopover = () => {
+    audioPopover.classList.add("is-open");
+    syncAudioPopover();
+  };
+
+  const closeAudioPopover = () => {
+    audioPopover.classList.remove("is-open");
+  };
+
+  const toggleAudioPopover = () => {
+    audioPopover.classList.toggle("is-open");
+    syncAudioPopover();
   };
 
   const saveAudioTime = () => {
@@ -220,7 +270,7 @@ if (audio && audioToggle) {
   const loadTrack = (trackIndex, { restoreTime = false } = {}) => {
     isChangingTrack = true;
     currentTrackIndex = (trackIndex + audioPlaylist.length) % audioPlaylist.length;
-    audio.src = audioPlaylist[currentTrackIndex];
+    audio.src = audioPlaylist[currentTrackIndex].src;
     localStorage.setItem(audioTrackKey, String(currentTrackIndex));
 
     if (restoreTime) {
@@ -234,6 +284,7 @@ if (audio && audioToggle) {
     }
 
     isChangingTrack = false;
+    syncAudioPopover();
   };
 
   if (audio.readyState >= 1) {
@@ -260,21 +311,44 @@ if (audio && audioToggle) {
     if (audio.paused) {
       await playBackgroundMusic({ fromUser: true });
     } else {
+      toggleAudioPopover();
+    }
+  });
+
+  audioTrackList?.addEventListener("click", async (event) => {
+    const trackButton = event.target.closest("[data-track-index]");
+    if (!trackButton) return;
+
+    loadTrack(Number.parseInt(trackButton.dataset.trackIndex || "0", 10));
+    await playBackgroundMusic({ fromUser: true });
+    openAudioPopover();
+  });
+
+  audioPauseControl?.addEventListener("click", async () => {
+    if (audio.paused) {
+      await playBackgroundMusic({ fromUser: true });
+    } else {
       saveAudioTime();
       localStorage.setItem(audioStateKey, "paused");
       audio.pause();
       syncAudioButton(false);
     }
+
+    syncAudioPopover();
   });
 
-  audio.addEventListener("play", () => syncAudioButton(true));
+  audio.addEventListener("play", () => {
+    syncAudioButton(true);
+    syncAudioPopover();
+  });
   audio.addEventListener("timeupdate", saveAudioTime);
   audio.addEventListener("ended", () => {
     loadTrack(currentTrackIndex + 1);
     playBackgroundMusic();
   });
   audio.addEventListener("pause", () => {
-    if (isLeavingPage || isChangingTrack || audio.ended) return;
+    syncAudioPopover();
+    if (isLeavingPage || isChangingTrack || isVideoPausingMusic || audio.ended) return;
     saveAudioTime();
     localStorage.setItem(audioStateKey, "paused");
     syncAudioButton(false);
@@ -304,6 +378,12 @@ if (audio && audioToggle) {
     localStorage.setItem(audioStateKey, "playing");
   });
 
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".audio-toggle") && !event.target.closest(".audio-popover")) {
+      closeAudioPopover();
+    }
+  });
+
   if (localStorage.getItem(audioStateKey) === "playing") {
     playBackgroundMusic();
 
@@ -318,6 +398,28 @@ if (audio && audioToggle) {
   } else {
     syncAudioButton(false);
   }
+
+  pauseBackgroundMusicForVideo = () => {
+    if (audio.paused) return;
+
+    closeAudioPopover();
+    shouldResumeAfterVideo = true;
+    isVideoPausingMusic = true;
+    saveAudioTime();
+    audio.pause();
+    isVideoPausingMusic = false;
+    syncAudioButton(false);
+    syncAudioPopover();
+  };
+
+  resumeBackgroundMusicAfterVideo = () => {
+    if (!shouldResumeAfterVideo || !audio.paused) return;
+
+    shouldResumeAfterVideo = false;
+    playBackgroundMusic();
+  };
+
+  syncAudioPopover();
 }
 
 const instaTrigger = document.querySelector(".instagram-float");
@@ -351,9 +453,55 @@ document.querySelectorAll("[data-rail-prev], [data-rail-next]").forEach((button)
 
 const videoModal = document.querySelector("#videoModal");
 const videoModalBody = document.querySelector("#videoModalBody");
+let youtubePlayer = null;
+let youtubeApiPromise = null;
+
+function loadYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (youtubeApiPromise) return youtubeApiPromise;
+
+  youtubeApiPromise = new Promise((resolve) => {
+    const previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      previousReady?.();
+      resolve(window.YT);
+    };
+
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      document.head.append(script);
+    }
+  });
+
+  return youtubeApiPromise;
+}
+
+async function connectYouTubePlayer(iframeId) {
+  const YT = await loadYouTubeApi();
+  const iframe = document.querySelector(`#${iframeId}`);
+  if (!iframe) return;
+
+  youtubePlayer = new YT.Player(iframeId, {
+    events: {
+      onStateChange(event) {
+        if (event.data === YT.PlayerState.PLAYING) {
+          pauseBackgroundMusicForVideo();
+        }
+
+        if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+          resumeBackgroundMusicAfterVideo();
+        }
+      },
+    },
+  });
+}
 
 function closeVideoModal() {
   if (!videoModal || !videoModalBody) return;
+  youtubePlayer?.destroy?.();
+  youtubePlayer = null;
+  resumeBackgroundMusicAfterVideo();
   videoModal.classList.remove("is-open");
   videoModal.setAttribute("aria-hidden", "true");
   videoModalBody.innerHTML = "";
@@ -396,9 +544,11 @@ function openVideoModal(card) {
 
     embedParams.set("origin", window.location.origin);
 
+    pauseBackgroundMusicForVideo();
     videoModalBody.innerHTML = `
       <div class="modal-frame">
         <iframe
+          id="youtubePlayerFrame"
           title="${title}"
           src="https://www.youtube.com/embed/${safeId}?${embedParams.toString()}"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -406,6 +556,7 @@ function openVideoModal(card) {
           allowfullscreen></iframe>
       </div>
     `;
+    connectYouTubePlayer("youtubePlayerFrame");
   } else {
     videoModalBody.innerHTML = `
       <div class="modal-placeholder">
