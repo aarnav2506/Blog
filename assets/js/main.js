@@ -188,6 +188,8 @@ if (audio && audioToggle) {
   let isChangingTrack = false;
   let isVideoPausingMusic = false;
   let shouldResumeAfterVideo = false;
+  const savedAudioTimeOnLoad = Number.parseFloat(localStorage.getItem(audioTimeKey) || "0");
+  let hasRestoredAudioTime = !(Number.isFinite(savedAudioTimeOnLoad) && savedAudioTimeOnLoad > 0);
 
   audio.volume = 0.26;
   audio.preload = "auto";
@@ -254,17 +256,22 @@ if (audio && audioToggle) {
   const saveAudioTime = () => {
     localStorage.setItem(audioTrackKey, String(currentTrackIndex));
 
+    if (!hasRestoredAudioTime && Number.isFinite(savedAudioTimeOnLoad) && savedAudioTimeOnLoad > 0 && audio.currentTime < 1) {
+      return;
+    }
+
     if (Number.isFinite(audio.currentTime)) {
       localStorage.setItem(audioTimeKey, String(audio.currentTime));
     }
   };
 
   const restoreAudioTime = () => {
-    const savedTime = Number.parseFloat(localStorage.getItem(audioTimeKey) || "0");
+    const savedTime = Number.isFinite(savedAudioTimeOnLoad) && savedAudioTimeOnLoad > 0 ? savedAudioTimeOnLoad : Number.parseFloat(localStorage.getItem(audioTimeKey) || "0");
     if (!Number.isFinite(savedTime) || savedTime <= 0) return;
 
     const duration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null;
     audio.currentTime = duration ? savedTime % duration : savedTime;
+    hasRestoredAudioTime = true;
   };
 
   const loadTrack = (trackIndex, { restoreTime = false } = {}) => {
@@ -281,6 +288,7 @@ if (audio && audioToggle) {
       }
     } else {
       localStorage.setItem(audioTimeKey, "0");
+      hasRestoredAudioTime = true;
     }
 
     isChangingTrack = false;
@@ -295,6 +303,10 @@ if (audio && audioToggle) {
 
   const playBackgroundMusic = async ({ fromUser = false } = {}) => {
     try {
+      if (!hasRestoredAudioTime) {
+        restoreAudioTime();
+      }
+
       await audio.play();
       localStorage.setItem(audioStateKey, "playing");
       syncAudioButton(true);
@@ -356,14 +368,16 @@ if (audio && audioToggle) {
 
   window.addEventListener("pagehide", () => {
     isLeavingPage = true;
+    const shouldKeepPlaying = localStorage.getItem(audioStateKey) === "playing" || !audio.paused;
     saveAudioTime();
-    localStorage.setItem(audioStateKey, audio.paused ? "paused" : "playing");
+    localStorage.setItem(audioStateKey, shouldKeepPlaying ? "playing" : "paused");
   });
 
   window.addEventListener("beforeunload", () => {
     isLeavingPage = true;
+    const shouldKeepPlaying = localStorage.getItem(audioStateKey) === "playing" || !audio.paused;
     saveAudioTime();
-    localStorage.setItem(audioStateKey, audio.paused ? "paused" : "playing");
+    localStorage.setItem(audioStateKey, shouldKeepPlaying ? "playing" : "paused");
   });
 
   document.addEventListener("click", (event) => {
