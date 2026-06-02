@@ -326,6 +326,11 @@ h1 {
   font-weight: 900;
 }
 
+.hero-copy h1 {
+  max-width: 11.5ch;
+  font-size: clamp(3.65rem, 9.25vw, 8.15rem);
+}
+
 .gradient-text {
   color: transparent;
   background: linear-gradient(110deg, #fff 0%, #9af6ff 34%, #b88dff 62%, #ffd36f 100%);
@@ -334,11 +339,66 @@ h1 {
   text-shadow: 0 0 40px rgba(70, 232, 255, 0.1);
 }
 
+.hero-copy h1 .gradient-text {
+  position: relative;
+  display: inline;
+}
+
+.hero-copy h1 .gradient-text.is-typing::after {
+  content: "";
+  display: inline-block;
+  width: 0.06em;
+  height: 0.78em;
+  margin-left: 0.08em;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, var(--cyan));
+  box-shadow: 0 0 24px rgba(123, 232, 255, 0.72);
+  transform: translateY(0.08em);
+  animation: typing-caret 760ms steps(1, end) infinite;
+}
+
+@keyframes typing-caret {
+  0%,
+  46% {
+    opacity: 1;
+  }
+  47%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .hero-lede {
   max-width: 59ch;
+  min-height: 4.9em;
   margin-bottom: 1.5rem;
   color: var(--soft);
   font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+}
+
+.lede-type-text {
+  display: inline-block;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 850;
+  text-shadow: 0 0 24px rgba(123, 232, 255, 0.18);
+}
+
+.lede-prefix,
+.lede-suffix {
+  color: var(--soft);
+}
+
+.lede-type-caret {
+  display: inline-block;
+  width: 0.12em;
+  height: 1.05em;
+  margin: 0 0.18em 0 0.04em;
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 0 18px rgba(239, 201, 120, 0.62);
+  transform: translateY(0.16em);
+  animation: typing-caret 760ms steps(1, end) infinite;
 }
 
 .hero-actions,
@@ -1689,6 +1749,10 @@ h1 {
 
   h1 {
     font-size: clamp(3.3rem, 18vw, 5.2rem);
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(3.05rem, 16vw, 5rem);
   }
 
   .hero-lede {
