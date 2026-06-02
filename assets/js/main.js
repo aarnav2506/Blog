@@ -18,6 +18,134 @@ document.querySelectorAll(".channel-avatar img").forEach((image) => {
   image.alt = "Play With Aarnav YouTube channel photo";
 });
 
+const heroTitle = document.querySelector(".hero-copy h1 .gradient-text");
+const heroLede = document.querySelector(".hero-lede");
+const heroLedeText = heroLede?.textContent.trim().replace(/\s+/g, " ") || "";
+
+if (heroLede && !prefersReducedMotion) {
+  heroLede.setAttribute("aria-label", heroLedeText);
+  heroLede.textContent = "";
+}
+
+function startHeroLedeTyping() {
+  if (!heroLede || prefersReducedMotion) return;
+  if (heroLede.dataset.hasTypedIntro === "true") return;
+
+  const ledeRoles = ["coder", "sports lover", "creator", "learner"];
+  const prefix = "I am a passionate ";
+  const suffix = " from Kolkata, building ideas, chasing better execution, and using AI like a launchpad for sharper work.";
+  let phase = "prefix";
+  let roleIndex = 0;
+  let characterIndex = 0;
+
+  heroLede.dataset.hasTypedIntro = "true";
+  heroLede.setAttribute("aria-label", heroLedeText);
+  heroLede.innerHTML = `
+    <span class="lede-prefix" aria-hidden="true"></span><span class="lede-type-text" aria-hidden="true"></span><span class="lede-type-caret" aria-hidden="true"></span><span class="lede-suffix" aria-hidden="true"></span>
+  `;
+
+  const prefixNode = heroLede.querySelector(".lede-prefix");
+  const roleNode = heroLede.querySelector(".lede-type-text");
+  const suffixNode = heroLede.querySelector(".lede-suffix");
+
+  const rotateRole = (isDeleting = true) => {
+    const currentRole = ledeRoles[roleIndex];
+
+    if (isDeleting) {
+      characterIndex -= 1;
+      roleNode.textContent = currentRole.slice(0, Math.max(characterIndex, 0));
+
+      if (characterIndex > 0) {
+        window.setTimeout(() => rotateRole(true), 72);
+        return;
+      }
+
+      roleIndex = (roleIndex + 1) % ledeRoles.length;
+      window.setTimeout(() => rotateRole(false), 280);
+      return;
+    }
+
+    const nextRole = ledeRoles[roleIndex];
+    characterIndex += 1;
+    roleNode.textContent = nextRole.slice(0, characterIndex);
+
+    if (characterIndex < nextRole.length) {
+      window.setTimeout(() => rotateRole(false), 126);
+      return;
+    }
+
+    window.setTimeout(() => rotateRole(true), 1500);
+  };
+
+  const typeFullLede = () => {
+    if (phase === "prefix") {
+      characterIndex += 1;
+      prefixNode.textContent = prefix.slice(0, characterIndex);
+
+      if (characterIndex < prefix.length) {
+        window.setTimeout(typeFullLede, 58);
+        return;
+      }
+
+      phase = "role";
+      characterIndex = 0;
+    }
+
+    if (phase === "role") {
+      characterIndex += 1;
+      roleNode.textContent = ledeRoles[0].slice(0, characterIndex);
+
+      if (characterIndex < ledeRoles[0].length) {
+        window.setTimeout(typeFullLede, 118);
+        return;
+      }
+
+      phase = "suffix";
+      characterIndex = 0;
+    }
+
+    if (phase === "suffix") {
+      characterIndex += 1;
+      suffixNode.textContent = suffix.slice(0, characterIndex);
+
+      if (characterIndex < suffix.length) {
+        window.setTimeout(typeFullLede, 34);
+        return;
+      }
+
+      characterIndex = ledeRoles[0].length;
+      window.setTimeout(() => rotateRole(true), 1450);
+    }
+  };
+
+  window.setTimeout(typeFullLede, 260);
+}
+
+if (heroTitle && !prefersReducedMotion) {
+  const titleText = heroTitle.textContent;
+  heroTitle.setAttribute("aria-label", titleText);
+  heroTitle.textContent = "";
+  heroTitle.classList.add("is-typing");
+
+  let characterIndex = 0;
+  const typeHeroTitle = () => {
+    characterIndex += 1;
+    heroTitle.textContent = titleText.slice(0, characterIndex);
+
+    if (characterIndex < titleText.length) {
+      window.setTimeout(typeHeroTitle, characterIndex === 6 ? 340 : 150);
+    } else {
+      heroTitle.classList.remove("is-typing");
+      heroTitle.classList.add("is-typed");
+      startHeroLedeTyping();
+    }
+  };
+
+  window.setTimeout(typeHeroTitle, 420);
+} else {
+  startHeroLedeTyping();
+}
+
 const currentPage = window.location.pathname.split("/").pop() || "index.html";
 
 if (currentPage === "books.html") {
