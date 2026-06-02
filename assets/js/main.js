@@ -13,6 +13,48 @@ const titleIconHref = "./assets/images/at-favicon-zoomed.png";
   iconLink.href = titleIconHref;
 });
 
+const themeKey = "aarnav-theme";
+const savedTheme = localStorage.getItem(themeKey);
+const preferredTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+let activeTheme = savedTheme || preferredTheme;
+
+function applyTheme(theme) {
+  activeTheme = theme === "light" ? "light" : "dark";
+  document.documentElement.dataset.theme = activeTheme;
+  document.documentElement.style.colorScheme = activeTheme;
+  localStorage.setItem(themeKey, activeTheme);
+}
+
+applyTheme(activeTheme);
+
+const siteHeader = document.querySelector(".site-header");
+if (siteHeader) {
+  const themeToggle = document.createElement("button");
+  themeToggle.className = "theme-toggle";
+  themeToggle.type = "button";
+
+  const syncThemeToggle = () => {
+    const isLight = activeTheme === "light";
+    themeToggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
+    themeToggle.setAttribute("title", isLight ? "Switch to dark mode" : "Switch to light mode");
+    themeToggle.innerHTML = `
+      <span class="theme-toggle__track" aria-hidden="true">
+        <span class="theme-toggle__thumb">
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.4A8.2 8.2 0 0 1 9.6 3a7.4 7.4 0 1 0 11.4 11.4Z"></path></svg>
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        </span>
+      </span>
+    `;
+  };
+
+  syncThemeToggle();
+  themeToggle.addEventListener("click", () => {
+    applyTheme(activeTheme === "light" ? "dark" : "light");
+    syncThemeToggle();
+  });
+  document.body.append(themeToggle);
+}
+
 document.querySelectorAll(".channel-avatar img").forEach((image) => {
   image.src = "./assets/images/youtube-play-with-aarnav.jpg";
   image.alt = "Play With Aarnav YouTube channel photo";
@@ -830,6 +872,9 @@ if (canvas && context && !prefersReducedMotion) {
   function drawStars() {
     context.clearRect(0, 0, width, height);
     const time = Date.now() * 0.00015;
+    const isLightTheme = document.documentElement.dataset.theme === "light";
+    const starColor = isLightTheme ? "24, 39, 66" : "255, 255, 255";
+    const starAlpha = isLightTheme ? 0.64 : 1;
 
     for (const star of stars) {
       star.y += star.speed;
@@ -840,7 +885,7 @@ if (canvas && context && !prefersReducedMotion) {
 
       const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(time + star.x * 0.01));
       context.beginPath();
-      context.fillStyle = `rgba(255, 255, 255, ${star.alpha * twinkle})`;
+      context.fillStyle = `rgba(${starColor}, ${star.alpha * twinkle * starAlpha})`;
       context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
       context.fill();
     }
@@ -858,7 +903,9 @@ if (canvas && context && !prefersReducedMotion) {
 
     if (shooting) {
       context.beginPath();
-      context.strokeStyle = `rgba(123, 232, 255, ${shooting.life})`;
+      context.strokeStyle = isLightTheme
+        ? `rgba(0, 127, 159, ${shooting.life * 0.78})`
+        : `rgba(123, 232, 255, ${shooting.life})`;
       context.lineWidth = 2 * (window.devicePixelRatio || 1);
       context.moveTo(shooting.x, shooting.y);
       context.lineTo(shooting.x - shooting.vx * 4, shooting.y - shooting.vy * 4);
