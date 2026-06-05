@@ -55,6 +55,27 @@ if (siteHeader) {
   document.body.append(themeToggle);
 }
 
+const scrollProgress = document.createElement("div");
+scrollProgress.className = "scroll-progress";
+document.body.append(scrollProgress);
+
+let scrollProgressFrame = null;
+function syncScrollProgress() {
+  const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = scrollable > 0 ? window.scrollY / scrollable : 0;
+  scrollProgress.style.transform = `scaleX(${Math.min(Math.max(progress, 0), 1)})`;
+  scrollProgressFrame = null;
+}
+
+function requestScrollProgress() {
+  if (scrollProgressFrame) return;
+  scrollProgressFrame = window.requestAnimationFrame(syncScrollProgress);
+}
+
+window.addEventListener("scroll", requestScrollProgress, { passive: true });
+window.addEventListener("resize", requestScrollProgress);
+requestScrollProgress();
+
 document.querySelectorAll(".channel-avatar img").forEach((image) => {
   image.src = "./assets/images/youtube-play-with-aarnav.jpg";
   image.alt = "Play With Aarnav YouTube channel photo";
@@ -363,7 +384,43 @@ if (revealItems.length) {
     { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
   );
 
-  revealItems.forEach((item) => revealObserver.observe(item));
+  revealItems.forEach((item, index) => {
+    const hasManualDelay = ["delay-1", "delay-2", "delay-3"].some((className) => item.classList.contains(className));
+    if (!hasManualDelay) item.style.setProperty("--reveal-delay", `${Math.min((index % 4) * 65, 195)}ms`);
+    revealObserver.observe(item);
+  });
+}
+
+const counterItems = Array.from(document.querySelectorAll(".ring-content b")).filter((item) => /^\d+$/.test(item.textContent.trim()));
+if (counterItems.length && !prefersReducedMotion) {
+  const animateCounter = (item) => {
+    const target = Number(item.textContent.trim());
+    const duration = 900;
+    const start = performance.now();
+
+    const tick = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      item.textContent = String(Math.round(target * eased));
+      if (progress < 1) window.requestAnimationFrame(tick);
+    };
+
+    item.textContent = "0";
+    window.requestAnimationFrame(tick);
+  };
+
+  const counterObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        animateCounter(entry.target);
+        counterObserver.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.5 }
+  );
+
+  counterItems.forEach((item) => counterObserver.observe(item));
 }
 
 document.querySelectorAll(".glass-card, .feature-card, .book-card, .place-card, .timeline-card, .video-card, .contact-card, .stat-card").forEach((card) => {
@@ -395,12 +452,21 @@ document.querySelectorAll("#guitarRail .video-card:first-child, #creatorRail .vi
 });
 
 if (!prefersReducedMotion) {
+  let parallaxFrame = null;
+  let parallaxX = "0";
+  let parallaxY = "0";
+
+  const syncParallax = () => {
+    document.documentElement.style.setProperty("--parallax-x", parallaxX);
+    document.documentElement.style.setProperty("--parallax-y", parallaxY);
+    parallaxFrame = null;
+  };
+
   window.addEventListener("pointermove", (event) => {
-    const x = (event.clientX / window.innerWidth - 0.5).toFixed(3);
-    const y = (event.clientY / window.innerHeight - 0.5).toFixed(3);
-    document.documentElement.style.setProperty("--parallax-x", x);
-    document.documentElement.style.setProperty("--parallax-y", y);
-  });
+    parallaxX = (event.clientX / window.innerWidth - 0.5).toFixed(3);
+    parallaxY = (event.clientY / window.innerHeight - 0.5).toFixed(3);
+    if (!parallaxFrame) parallaxFrame = window.requestAnimationFrame(syncParallax);
+  }, { passive: true });
 }
 
 const audio = document.querySelector("#bgm");
@@ -882,7 +948,33 @@ if (canvas && context && !prefersReducedMotion) {
         star.y = -4;
         star.x = Math.random() * width;
       }
+    }
 
+    const networkStars = stars.slice(0, Math.min(stars.length, 110));
+    const dpr = window.devicePixelRatio || 1;
+    const networkDistance = Math.min(145, Math.max(96, window.innerWidth * 0.08)) * dpr;
+    const networkDistanceSq = networkDistance * networkDistance;
+    const networkColor = isLightTheme ? "24, 39, 66" : "123, 232, 255";
+
+    context.lineWidth = 0.55 * dpr;
+    for (let i = 0; i < networkStars.length; i += 1) {
+      for (let j = i + 1; j < networkStars.length; j += 1) {
+        const dx = networkStars[i].x - networkStars[j].x;
+        const dy = networkStars[i].y - networkStars[j].y;
+        const distanceSq = dx * dx + dy * dy;
+        if (distanceSq > networkDistanceSq) continue;
+
+        const distance = Math.sqrt(distanceSq);
+        const alpha = (1 - distance / networkDistance) * (isLightTheme ? 0.1 : 0.14);
+        context.beginPath();
+        context.strokeStyle = `rgba(${networkColor}, ${alpha})`;
+        context.moveTo(networkStars[i].x, networkStars[i].y);
+        context.lineTo(networkStars[j].x, networkStars[j].y);
+        context.stroke();
+      }
+    }
+
+    for (const star of stars) {
       const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(time + star.x * 0.01));
       context.beginPath();
       context.fillStyle = `rgba(${starColor}, ${star.alpha * twinkle * starAlpha})`;
