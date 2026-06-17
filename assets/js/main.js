@@ -59,6 +59,13 @@ const scrollProgress = document.createElement("div");
 scrollProgress.className = "scroll-progress";
 document.body.append(scrollProgress);
 
+if (!prefersReducedMotion && !document.querySelector(".texture-grain")) {
+  const grain = document.createElement("div");
+  grain.className = "texture-grain";
+  grain.setAttribute("aria-hidden", "true");
+  document.body.append(grain);
+}
+
 let scrollProgressFrame = null;
 function syncScrollProgress() {
   const scrollable = document.documentElement.scrollHeight - window.innerHeight;
@@ -75,6 +82,61 @@ function requestScrollProgress() {
 window.addEventListener("scroll", requestScrollProgress, { passive: true });
 window.addEventListener("resize", requestScrollProgress);
 requestScrollProgress();
+
+// Smooth, high-framerate inertia scrolling for a buttery 120fps-style feel.
+let lenis = null;
+if (!prefersReducedMotion && typeof window.Lenis === "function") {
+  lenis = new window.Lenis({
+    duration: 1.05,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    wheelMultiplier: 1,
+    touchMultiplier: 1.5,
+    lerp: 0.1,
+  });
+
+  const runLenis = (time) => {
+    lenis.raf(time);
+    window.requestAnimationFrame(runLenis);
+  };
+  window.requestAnimationFrame(runLenis);
+
+  lenis.on("scroll", ({ velocity }) => {
+    requestScrollProgress();
+    const clamped = Math.max(-40, Math.min(40, velocity));
+    document.documentElement.style.setProperty("--scroll-velocity", clamped.toFixed(2));
+  });
+
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    const targetId = link.getAttribute("href");
+    if (!targetId || targetId === "#") return;
+
+    link.addEventListener("click", (event) => {
+      const target = document.querySelector(targetId);
+      if (!target) return;
+      event.preventDefault();
+      lenis.scrollTo(target, { offset: -90, duration: 1.1 });
+    });
+  });
+}
+
+// Tactile ripple + press feedback on buttons.
+if (!prefersReducedMotion) {
+  document.querySelectorAll(".button, .icon-button, .play-button, .modal-close").forEach((control) => {
+    control.addEventListener("pointerdown", (event) => {
+      const rect = control.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement("span");
+      ripple.className = "btn-ripple";
+      ripple.style.width = `${size}px`;
+      ripple.style.height = `${size}px`;
+      ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+      control.appendChild(ripple);
+      ripple.addEventListener("animationend", () => ripple.remove());
+    });
+  });
+}
 
 document.querySelectorAll(".channel-avatar img").forEach((image) => {
   image.src = "./assets/images/youtube-play-with-aarnav.jpg";
