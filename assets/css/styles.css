@@ -2294,55 +2294,6 @@ html[data-theme="light"] .modal-placeholder {
   }
 }
 
-/* Smooth inertia scrolling (Lenis) */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-
-.lenis.lenis-stopped {
-  overflow: hidden;
-}
-
-.lenis.lenis-smooth iframe {
-  pointer-events: none;
-}
-
-/* Film-grain texture overlay */
-.texture-grain {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.42;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 190px 190px;
-  animation: grain-shift 5.4s steps(7) infinite;
-}
-
-html[data-theme="light"] .texture-grain {
-  opacity: 0.26;
-  mix-blend-mode: multiply;
-}
-
-@keyframes grain-shift {
-  0% { transform: translate3d(0, 0, 0); }
-  20% { transform: translate3d(-6%, 4%, 0); }
-  40% { transform: translate3d(5%, -7%, 0); }
-  60% { transform: translate3d(-4%, 6%, 0); }
-  80% { transform: translate3d(7%, 3%, 0); }
-  100% { transform: translate3d(0, 0, 0); }
-}
-
 /* Tactile button micro-interactions */
 .button,
 .icon-button,
@@ -2433,10 +2384,6 @@ html[data-theme="light"] .texture-grain {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-  }
-
-  .texture-grain {
-    display: none;
   }
 
   #starfield {
