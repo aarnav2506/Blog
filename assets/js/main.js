@@ -76,6 +76,117 @@ window.addEventListener("scroll", requestScrollProgress, { passive: true });
 window.addEventListener("resize", requestScrollProgress);
 requestScrollProgress();
 
+let startBackgroundMusicForIdleScroll = () => {};
+
+const idleAutoScrollEnabled =
+  !prefersReducedMotion &&
+  window.matchMedia("(pointer: fine)").matches &&
+  !window.matchMedia("(max-width: 780px)").matches;
+
+if (idleAutoScrollEnabled) {
+  const idleDelay = 10000;
+  const idleAutoSpeed = 0.034; // pixels per millisecond, slowed down for a smoother idle glide.
+  const autoEase = 0.12;
+  let autoScrollFrame = null;
+  let currentAutoScrollY = window.scrollY;
+  let targetAutoScrollY = currentAutoScrollY;
+  let lastAutoFrameTime = 0;
+  let autoScrolling = false;
+  let idleTimer = null;
+  let programmaticScrollUntil = 0;
+
+  const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  const clampScrollY = (value) => Math.min(Math.max(value, 0), maxScrollY());
+
+  function stopAutoScroll() {
+    autoScrolling = false;
+    lastAutoFrameTime = 0;
+    if (autoScrollFrame) {
+      window.cancelAnimationFrame(autoScrollFrame);
+      autoScrollFrame = null;
+    }
+  }
+
+  function scheduleIdleAutoScroll() {
+    window.clearTimeout(idleTimer);
+    idleTimer = window.setTimeout(() => {
+      if (document.visibilityState !== "visible") return;
+      if (document.body.style.overflow === "hidden") return;
+      if (window.scrollY >= maxScrollY() - 2) return;
+
+      currentAutoScrollY = window.scrollY;
+      targetAutoScrollY = currentAutoScrollY;
+      autoScrolling = true;
+      startBackgroundMusicForIdleScroll();
+      requestAutoScrollFrame();
+    }, idleDelay);
+  }
+
+  function noteUserActivity() {
+    stopAutoScroll();
+    scheduleIdleAutoScroll();
+  }
+
+  function requestAutoScrollFrame() {
+    if (autoScrollFrame) return;
+    autoScrollFrame = window.requestAnimationFrame(renderAutoScroll);
+  }
+
+  function renderAutoScroll(now) {
+    autoScrollFrame = null;
+    if (!autoScrolling) return;
+    if (document.visibilityState !== "visible" || document.body.style.overflow === "hidden") {
+      stopAutoScroll();
+      return;
+    }
+
+    const deltaTime = lastAutoFrameTime ? Math.min(now - lastAutoFrameTime, 48) : 16;
+    targetAutoScrollY = clampScrollY(targetAutoScrollY + idleAutoSpeed * deltaTime);
+    currentAutoScrollY += (targetAutoScrollY - currentAutoScrollY) * autoEase;
+    lastAutoFrameTime = now;
+
+    if (Math.abs(targetAutoScrollY - currentAutoScrollY) < 0.25) {
+      currentAutoScrollY = targetAutoScrollY;
+    }
+
+    programmaticScrollUntil = performance.now() + 90;
+    window.scrollTo(0, currentAutoScrollY);
+
+    if (targetAutoScrollY >= maxScrollY() - 1 && Math.abs(targetAutoScrollY - currentAutoScrollY) < 0.5) {
+      stopAutoScroll();
+      return;
+    }
+
+    requestAutoScrollFrame();
+  }
+
+  window.addEventListener("scroll", () => {
+    if (performance.now() <= programmaticScrollUntil) return;
+    currentAutoScrollY = window.scrollY;
+    targetAutoScrollY = currentAutoScrollY;
+    noteUserActivity();
+  }, { passive: true });
+
+  window.addEventListener("resize", () => {
+    currentAutoScrollY = clampScrollY(window.scrollY);
+    targetAutoScrollY = currentAutoScrollY;
+  });
+
+  ["pointermove", "pointerdown", "wheel", "keydown", "touchstart"].forEach((eventName) => {
+    window.addEventListener(eventName, noteUserActivity, { passive: true });
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      noteUserActivity();
+    } else {
+      stopAutoScroll();
+    }
+  });
+
+  scheduleIdleAutoScroll();
+}
+
 // Tactile ripple + press feedback on buttons.
 if (!prefersReducedMotion) {
   document.querySelectorAll(".button, .icon-button, .play-button, .modal-close").forEach((control) => {
@@ -502,10 +613,13 @@ if (audio && audioToggle) {
   const audioStateKey = "aarnav-bgm-state";
   const audioTrackKey = "aarnav-bgm-track";
   const audioTimeKey = "aarnav-bgm-time";
+  const idleAudioPausedKey = "aarnav-idle-bgm-user-paused";
   let isLeavingPage = false;
   let isChangingTrack = false;
   let isVideoPausingMusic = false;
   let shouldResumeAfterVideo = false;
+  let hasUserPausedIdleMusic = localStorage.getItem(idleAudioPausedKey) === "true";
+  let pendingIdleMusicStart = false;
   const savedAudioTimeOnLoad = Number.parseFloat(localStorage.getItem(audioTimeKey) || "0");
   let hasRestoredAudioTime = !(Number.isFinite(savedAudioTimeOnLoad) && savedAudioTimeOnLoad > 0);
 
@@ -628,17 +742,36 @@ if (audio && audioToggle) {
       await audio.play();
       localStorage.setItem(audioStateKey, "playing");
       syncAudioButton(true);
+      return true;
     } catch {
       if (fromUser) {
         localStorage.setItem(audioStateKey, "paused");
       }
       syncAudioButton(false);
       audioToggle.classList.toggle("needs-tap", !fromUser);
+      return false;
     }
+  };
+
+  const resetToFirstTrack = () => {
+    loadTrack(0);
+    try {
+      audio.currentTime = 0;
+    } catch {
+      audio.addEventListener("loadedmetadata", () => {
+        audio.currentTime = 0;
+      }, { once: true });
+    }
+    hasRestoredAudioTime = true;
+    localStorage.setItem(audioTrackKey, "0");
+    localStorage.setItem(audioTimeKey, "0");
   };
 
   audioToggle.addEventListener("click", async () => {
     if (audio.paused) {
+      hasUserPausedIdleMusic = false;
+      pendingIdleMusicStart = false;
+      localStorage.setItem(idleAudioPausedKey, "false");
       await playBackgroundMusic({ fromUser: true });
     } else {
       toggleAudioPopover();
@@ -650,14 +783,23 @@ if (audio && audioToggle) {
     if (!trackButton) return;
 
     loadTrack(Number.parseInt(trackButton.dataset.trackIndex || "0", 10));
+    hasUserPausedIdleMusic = false;
+    pendingIdleMusicStart = false;
+    localStorage.setItem(idleAudioPausedKey, "false");
     await playBackgroundMusic({ fromUser: true });
     openAudioPopover();
   });
 
   audioPauseControl?.addEventListener("click", async () => {
     if (audio.paused) {
+      hasUserPausedIdleMusic = false;
+      pendingIdleMusicStart = false;
+      localStorage.setItem(idleAudioPausedKey, "false");
       await playBackgroundMusic({ fromUser: true });
     } else {
+      hasUserPausedIdleMusic = true;
+      pendingIdleMusicStart = false;
+      localStorage.setItem(idleAudioPausedKey, "true");
       saveAudioTime();
       localStorage.setItem(audioStateKey, "paused");
       audio.pause();
@@ -665,6 +807,28 @@ if (audio && audioToggle) {
     }
 
     syncAudioPopover();
+  });
+
+  startBackgroundMusicForIdleScroll = () => {
+    if (hasUserPausedIdleMusic) return;
+    closeAudioPopover();
+    resetToFirstTrack();
+    localStorage.setItem(audioStateKey, "playing");
+    playBackgroundMusic().then((didPlay) => {
+      pendingIdleMusicStart = !didPlay;
+    });
+  };
+
+  const resumePendingIdleMusicStart = async () => {
+    if (!pendingIdleMusicStart || hasUserPausedIdleMusic || !audio.paused) return;
+
+    pendingIdleMusicStart = false;
+    resetToFirstTrack();
+    await playBackgroundMusic({ fromUser: true });
+  };
+
+  ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
+    document.addEventListener(eventName, resumePendingIdleMusicStart, { passive: true });
   });
 
   audio.addEventListener("play", () => {
