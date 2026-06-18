@@ -613,12 +613,11 @@ if (audio && audioToggle) {
   const audioStateKey = "aarnav-bgm-state";
   const audioTrackKey = "aarnav-bgm-track";
   const audioTimeKey = "aarnav-bgm-time";
-  const idleAudioPausedKey = "aarnav-idle-bgm-user-paused";
   let isLeavingPage = false;
   let isChangingTrack = false;
   let isVideoPausingMusic = false;
   let shouldResumeAfterVideo = false;
-  let hasUserPausedIdleMusic = localStorage.getItem(idleAudioPausedKey) === "true";
+  let hasUserPausedIdleMusic = false;
   let pendingIdleMusicStart = false;
   const savedAudioTimeOnLoad = Number.parseFloat(localStorage.getItem(audioTimeKey) || "0");
   let hasRestoredAudioTime = !(Number.isFinite(savedAudioTimeOnLoad) && savedAudioTimeOnLoad > 0);
@@ -771,7 +770,6 @@ if (audio && audioToggle) {
     if (audio.paused) {
       hasUserPausedIdleMusic = false;
       pendingIdleMusicStart = false;
-      localStorage.setItem(idleAudioPausedKey, "false");
       await playBackgroundMusic({ fromUser: true });
     } else {
       toggleAudioPopover();
@@ -785,7 +783,6 @@ if (audio && audioToggle) {
     loadTrack(Number.parseInt(trackButton.dataset.trackIndex || "0", 10));
     hasUserPausedIdleMusic = false;
     pendingIdleMusicStart = false;
-    localStorage.setItem(idleAudioPausedKey, "false");
     await playBackgroundMusic({ fromUser: true });
     openAudioPopover();
   });
@@ -794,12 +791,10 @@ if (audio && audioToggle) {
     if (audio.paused) {
       hasUserPausedIdleMusic = false;
       pendingIdleMusicStart = false;
-      localStorage.setItem(idleAudioPausedKey, "false");
       await playBackgroundMusic({ fromUser: true });
     } else {
       hasUserPausedIdleMusic = true;
       pendingIdleMusicStart = false;
-      localStorage.setItem(idleAudioPausedKey, "true");
       saveAudioTime();
       localStorage.setItem(audioStateKey, "paused");
       audio.pause();
@@ -813,6 +808,7 @@ if (audio && audioToggle) {
     if (hasUserPausedIdleMusic) return;
     closeAudioPopover();
     resetToFirstTrack();
+    pendingIdleMusicStart = true;
     localStorage.setItem(audioStateKey, "playing");
     playBackgroundMusic().then((didPlay) => {
       pendingIdleMusicStart = !didPlay;
