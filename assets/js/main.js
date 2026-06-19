@@ -13,6 +13,14 @@ const titleIconHref = "./assets/images/at-favicon-zoomed.png";
   iconLink.href = titleIconHref;
 });
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((error) => {
+      console.log("SW registration failed:", error);
+    });
+  });
+}
+
 const themeKey = "aarnav-theme";
 const savedTheme = localStorage.getItem(themeKey);
 const preferredTheme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
@@ -581,20 +589,33 @@ document.querySelectorAll("#guitarRail .video-card:first-child, #creatorRail .vi
 });
 
 if (!prefersReducedMotion) {
+  let parallaxX = 0;
+  let parallaxY = 0;
+  let velX = 0;
+  let velY = 0;
   let parallaxFrame = null;
-  let parallaxX = "0";
-  let parallaxY = "0";
 
-  const syncParallax = () => {
-    document.documentElement.style.setProperty("--parallax-x", parallaxX);
-    document.documentElement.style.setProperty("--parallax-y", parallaxY);
-    parallaxFrame = null;
+  const smoothParallax = () => {
+    parallaxX += velX;
+    parallaxY += velY;
+    velX *= 0.86;
+    velY *= 0.86;
+    document.documentElement.style.setProperty("--parallax-x", parallaxX.toFixed(3));
+    document.documentElement.style.setProperty("--parallax-y", parallaxY.toFixed(3));
+
+    if (Math.abs(velX) > 0.001 || Math.abs(velY) > 0.001) {
+      parallaxFrame = window.requestAnimationFrame(smoothParallax);
+    } else {
+      parallaxFrame = null;
+    }
   };
 
   window.addEventListener("pointermove", (event) => {
-    parallaxX = (event.clientX / window.innerWidth - 0.5).toFixed(3);
-    parallaxY = (event.clientY / window.innerHeight - 0.5).toFixed(3);
-    if (!parallaxFrame) parallaxFrame = window.requestAnimationFrame(syncParallax);
+    const targetX = (event.clientX / window.innerWidth - 0.5) * 2.5;
+    const targetY = (event.clientY / window.innerHeight - 0.5) * 2.5;
+    velX = (targetX - parallaxX) * 0.14;
+    velY = (targetY - parallaxY) * 0.14;
+    if (!parallaxFrame) parallaxFrame = window.requestAnimationFrame(smoothParallax);
   }, { passive: true });
 }
 
