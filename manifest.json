@@ -1,0 +1,21 @@
+{
+  "name": "Aarnav Thakur",
+  "short_name": "Aarnav",
+  "description": "Personal portfolio of Aarnav Thakur - Coder, Builder, Athlete",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050814",
+  "theme_color": "#7be8ff",
+  "icons": [
+    {
+      "src": "./assets/images/at-favicon-zoomed.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/images/at-favicon-zoomed.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
