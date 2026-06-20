@@ -668,6 +668,15 @@ if (audio && audioToggle) {
   let currentTrackIndex = getSavedTrackIndex();
   audio.src = audioPlaylist[currentTrackIndex].src;
 
+  const syncAudioAmbientTrack = () => {
+    window.__aarnavAudioTrack = {
+      index: currentTrackIndex,
+      title: audioPlaylist[currentTrackIndex]?.title || "",
+      src: audioPlaylist[currentTrackIndex]?.src || "",
+    };
+    window.dispatchEvent(new CustomEvent("aarnav:audio-track-change", { detail: window.__aarnavAudioTrack }));
+  };
+
   const syncAudioButton = (isPlaying) => {
     audioToggle.classList.toggle("is-playing", isPlaying);
     audioToggle.classList.toggle("needs-tap", false);
@@ -731,6 +740,7 @@ if (audio && audioToggle) {
     currentTrackIndex = (trackIndex + audioPlaylist.length) % audioPlaylist.length;
     audio.src = audioPlaylist[currentTrackIndex].src;
     localStorage.setItem(audioTrackKey, String(currentTrackIndex));
+    syncAudioAmbientTrack();
 
     if (restoreTime) {
       if (audio.readyState >= 1) {
@@ -752,6 +762,7 @@ if (audio && audioToggle) {
   } else {
     audio.addEventListener("loadedmetadata", restoreAudioTime, { once: true });
   }
+  syncAudioAmbientTrack();
 
   const playBackgroundMusic = async ({ fromUser = false } = {}) => {
     try {
@@ -1149,15 +1160,28 @@ if (canvas && context && !prefersReducedMotion) {
       }
     }
 
+    const audioEnergy = Math.min(1, window.__aarnavAudioEnergy || 0);
+    const audioPulse = 1 + audioEnergy * 0.82;
+    const glowStars = audioEnergy > 0.035;
     for (const star of stars) {
       const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(time + star.x * 0.01));
+      const alpha = Math.min(1, star.alpha * twinkle * starAlpha * audioPulse);
+      const radius = star.radius * audioPulse;
       context.beginPath();
-      context.fillStyle = `rgba(${starColor}, ${star.alpha * twinkle * starAlpha})`;
-      context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      context.fillStyle = `rgba(${starColor}, ${alpha})`;
+      context.arc(star.x, star.y, radius, 0, Math.PI * 2);
       context.fill();
+      if (glowStars && star.alpha > 0.62) {
+        context.beginPath();
+        context.fillStyle = isLightTheme
+          ? `rgba(0, 127, 159, ${audioEnergy * 0.08})`
+          : `rgba(123, 232, 255, ${audioEnergy * 0.12})`;
+        context.arc(star.x, star.y, radius * 2.35, 0, Math.PI * 2);
+        context.fill();
+      }
     }
 
-    if (!shooting && Math.random() < 0.012) {
+    if (!shooting && Math.random() < 0.012 + audioEnergy * 0.004) {
       const dpr = window.devicePixelRatio || 1;
       shooting = {
         x: Math.random() * width * 0.8,
