@@ -1149,30 +1149,6 @@ if (canvas && context && !prefersReducedMotion) {
       }
     }
 
-    const networkStars = stars.slice(0, Math.min(stars.length, 110));
-    const dpr = window.devicePixelRatio || 1;
-    const networkDistance = Math.min(145, Math.max(96, window.innerWidth * 0.08)) * dpr;
-    const networkDistanceSq = networkDistance * networkDistance;
-    const networkColor = isLightTheme ? "24, 39, 66" : "123, 232, 255";
-
-    context.lineWidth = 0.55 * dpr;
-    for (let i = 0; i < networkStars.length; i += 1) {
-      for (let j = i + 1; j < networkStars.length; j += 1) {
-        const dx = networkStars[i].x - networkStars[j].x;
-        const dy = networkStars[i].y - networkStars[j].y;
-        const distanceSq = dx * dx + dy * dy;
-        if (distanceSq > networkDistanceSq) continue;
-
-        const distance = Math.sqrt(distanceSq);
-        const alpha = (1 - distance / networkDistance) * (isLightTheme ? 0.1 : 0.14);
-        context.beginPath();
-        context.strokeStyle = `rgba(${networkColor}, ${alpha})`;
-        context.moveTo(networkStars[i].x, networkStars[i].y);
-        context.lineTo(networkStars[j].x, networkStars[j].y);
-        context.stroke();
-      }
-    }
-
     for (const star of stars) {
       const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(time + star.x * 0.01));
       context.beginPath();
