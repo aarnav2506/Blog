@@ -68,6 +68,7 @@
     let micPermissionLocked = false;
     let speechTimer = null;
     let speechKeepAlive = null;
+    let assistantAudio = null;
     let restoreMusicAfterSpeech = () => {};
 
     const fallbackBooks = ["Atomic Habits", "Roald Dahl", "Sudha Murty", "Treasure Island", "Sherlock Holmes"];
@@ -83,6 +84,45 @@
     };
 
     const normalizeText = (text) => text.toLowerCase().replace(/[^a-z0-9\s']/g, " ").replace(/\s+/g, " ").trim();
+
+    const assistantVoicePath = (fileName) => `./assets/audio/assistant/${encodeURIComponent(fileName)}`;
+
+    const assistantVoiceClips = [
+      {
+        match: (text) => text.startsWith("Hello. You can ask me about Aarnav's coding"),
+        file: "[E-girl]Hello......nels..mp3",
+      },
+      {
+        match: (text) => text.startsWith("Coding is one of the biggest parts of Aarnav's life"),
+        file: "E-girl-2026-06-23-14-32-Coding-is-one-of-the-biggest-parts-of-Aarnav's-l.mp3",
+      },
+      {
+        match: (text) => text.startsWith("The portfolio currently features Atomic Habits"),
+        file: "E-girl-2026-06-23-14-32-The-portfolio-currently-features-Atomic-Habits,.mp3",
+      },
+      {
+        match: (text) => text.startsWith("Aarnav's travel wall includes Havelock Island"),
+        file: "E-girl-2026-06-23-14-33-Aarnav's-travel-wall-includes-Havelock-Island,-N.mp3",
+      },
+      {
+        match: (text) => text.startsWith("Aarnav created this website using his coding skills"),
+        file: "E-girl-2026-06-23-14-34-Aarnav-created-this-website-using-his-coding-ski.mp3",
+      },
+      {
+        match: (text) => text.startsWith("The music button is at the bottom-right corner"),
+        file: "E-girl-2026-06-23-14-49-The-music-button-is-at-the-bottom-right-corner-o.mp3",
+      },
+      {
+        match: (text) => text.startsWith("The Instagram button is at the bottom-right corner"),
+        file: "E-girl-2026-06-23-14-50-The-Instagram-button-is-at-the-bottom-right-corn.mp3",
+      },
+      {
+        match: (text) => text.startsWith("I can answer like a smart portfolio guide"),
+        file: "E-girl-2026-06-23-14-45-I-can-answer-like-a-smart-portfolio-guide-using.mp3",
+      },
+    ];
+
+    const findAssistantVoiceClip = (text) => assistantVoiceClips.find((clip) => clip.match(text));
 
     const portfolioKnowledge = [
       {
@@ -174,6 +214,12 @@
       const asksForFinding = /\b(where|find|open|go|reach|navigate|navigation|menu|page|pages|button|buttons|click|tab|section)\b/.test(query);
       if (!asksForFinding) return "";
 
+      if (/\b(music|song|audio|pause|play|playlist|queue)\b/.test(query)) {
+        return "The music button is at the bottom-right corner of the website. Click it once to play or pause music, and click again while it is active to open the music queue and choose a song.";
+      }
+      if (/\b(instagram|insta|social|profile)\b/.test(query)) {
+        return "The Instagram button is at the bottom-right corner of the website, near the music button. Click it to open Aarnav's Instagram profile.";
+      }
       if (/\b(book|books|reading|novel)\b/.test(query)) {
         return "To find the Books page, use the top navigation bar and click Books. On the Home page, you can also use Open Books Page or Find More Books to see the full book collection.";
       }
@@ -183,14 +229,11 @@
       if (/\b(interest|interests|skill|skills|coding|sports|guitar|music)\b/.test(query)) {
         return "To find interests, click Interests in the top navigation bar. That page contains coding, sports, guitar, content creation, and learning sections.";
       }
-      if (/\b(find me|contact|instagram|online|social|profile)\b/.test(query)) {
+      if (/\b(find me|contact|online)\b/.test(query)) {
         return "To find Aarnav online, click Find Me in the top navigation bar. You can also use the Instagram icon at the bottom-right of the website.";
       }
       if (/\b(home|front|main|start)\b/.test(query)) {
         return "To return to the main page, click Home in the top navigation bar. The Home page has the hero intro, quick buttons, and preview tiles.";
-      }
-      if (/\b(music|song|audio|pause|play|playlist|queue)\b/.test(query)) {
-        return "The music button is at the bottom-right corner. Click it once to play or pause music, and click again while it is active to open the music queue and choose a song.";
       }
       if (/\b(theme|dark|light|moon|mode)\b/.test(query)) {
         return "The light and dark mode switch is at the extreme top-right of the navigation bar. Click the moon or sun toggle to change the website theme.";
@@ -265,6 +308,11 @@
         window.clearInterval(speechKeepAlive);
         speechKeepAlive = null;
       }
+      if (assistantAudio) {
+        assistantAudio.pause();
+        assistantAudio.currentTime = 0;
+        assistantAudio = null;
+      }
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       restoreMusicAfterSpeech();
     };
@@ -288,10 +336,6 @@
 
     const speak = (text) => {
       if (!speechEnabled) return;
-      if (!("speechSynthesis" in window)) {
-        status.textContent = "Spoken replies are not supported in this browser.";
-        return;
-      }
       stopSpeaking();
       const music = document.querySelector("#bgm");
       const originalMusicVolume = music?.volume ?? 0.26;
@@ -301,6 +345,32 @@
       };
       if (music && !music.paused) music.volume = Math.min(originalMusicVolume, 0.055);
 
+      const voiceClip = findAssistantVoiceClip(text);
+      if (voiceClip) {
+        assistantAudio = new Audio(assistantVoicePath(voiceClip.file));
+        assistantAudio.volume = 1;
+        assistantAudio.addEventListener("ended", restoreMusicAfterSpeech, { once: true });
+        assistantAudio.addEventListener("error", () => {
+          restoreMusicAfterSpeech();
+          assistantAudio = null;
+          speakWithBrowserVoice(text);
+        }, { once: true });
+        assistantAudio.play().catch(() => {
+          restoreMusicAfterSpeech();
+          assistantAudio = null;
+          speakWithBrowserVoice(text);
+        });
+        return;
+      }
+
+      speakWithBrowserVoice(text);
+    };
+
+    const speakWithBrowserVoice = (text) => {
+      if (!("speechSynthesis" in window)) {
+        status.textContent = "Spoken replies are not supported in this browser.";
+        return;
+      }
       const chunks = splitSpeechText(text);
       let index = 0;
       const speakNextChunk = () => {
