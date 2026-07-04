@@ -513,3 +513,36 @@ html[data-theme="light"] .globe-location {
   .ai-guide-toggle__orb { animation: none; }
   .reactive-guitar-string { animation: none !important; }
 }
+
+html.performance-phone .gpu-ambient {
+  display: none;
+}
+
+html.performance-phone body::after {
+  opacity: 0.55;
+  filter: none;
+}
+
+html.performance-phone body.audio-reactive #starfield {
+  filter: none;
+}
+
+html.performance-phone body.audio-reactive .texture-noise {
+  opacity: 0.1;
+  background-size: 160% 160%, 42px 42px;
+}
+
+html.performance-phone body.audio-reactive .aurora {
+  opacity: 0.16;
+  filter: blur(42px);
+}
+
+html.performance-phone .ai-guide,
+html.performance-phone .ai-guide-toggle {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.38);
+}
+
+html.performance-phone .ai-guide-toggle__orb {
+  animation: none;
+}

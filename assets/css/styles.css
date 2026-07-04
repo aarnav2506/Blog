@@ -2426,3 +2426,54 @@ html[data-theme="light"] .modal-placeholder {
     display: none;
   }
 }
+
+html.performance-phone {
+  scroll-behavior: auto;
+}
+
+html.performance-phone .texture-noise {
+  animation: none;
+  opacity: 0.08;
+}
+
+html.performance-phone .aurora {
+  animation: none;
+  filter: blur(42px);
+  opacity: 0.16;
+}
+
+html.performance-phone .portrait-orbit,
+html.performance-phone .hero-card,
+html.performance-phone .status-card,
+html.performance-phone .floating-actions .icon-button::before {
+  animation: none !important;
+}
+
+html.performance-phone .site-header,
+html.performance-phone .glass-card,
+html.performance-phone .feature-card,
+html.performance-phone .book-card,
+html.performance-phone .place-card,
+html.performance-phone .video-card,
+html.performance-phone .hero-card,
+html.performance-phone .status-card,
+html.performance-phone .modal-content,
+html.performance-phone .audio-popover {
+  backdrop-filter: blur(8px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+html.performance-phone .glass-card:hover,
+html.performance-phone .feature-card:hover,
+html.performance-phone .video-card:hover,
+html.performance-phone .book-card:hover,
+html.performance-phone .place-card:hover {
+  transform: none;
+}
+
+html.performance-phone .scroll-reveal,
+html.performance-phone [data-reveal] {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
