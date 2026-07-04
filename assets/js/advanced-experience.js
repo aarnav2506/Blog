@@ -3,6 +3,8 @@
 
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const performanceMode = window.__aarnavPerformanceMode || document.documentElement.dataset.performance || "full";
+  const isPhonePerformanceMode = performanceMode === "phone";
   window.__aarnavAudioEnergy = 0;
 
   function initPortfolioGuide() {
@@ -524,6 +526,8 @@
     let frame = null;
     let energy = 0;
     let bass = 0;
+    let lastAudioFrame = 0;
+    const audioFrameInterval = isPhonePerformanceMode ? 1000 / 12 : 1000 / 60;
 
     const syncTrackProfile = () => {
       const trackIndex = window.__aarnavAudioTrack?.index ?? Number.parseInt(localStorage.getItem("aarnav-bgm-track") || "0", 10);
@@ -533,8 +537,13 @@
       document.documentElement.style.setProperty("--audio-accent-rgb", activeTrackProfile.accentHue);
     };
 
-    const drawAudioReaction = () => {
+    const drawAudioReaction = (now = 0) => {
       frame = null;
+      if (now - lastAudioFrame < audioFrameInterval) {
+        frame = window.requestAnimationFrame(drawAudioReaction);
+        return;
+      }
+      lastAudioFrame = now;
       let nextEnergy = 0;
       let nextBass = 0;
 
@@ -891,7 +900,7 @@
   }
 
   async function initWebGpuAmbient() {
-    if (prefersReducedMotion || !navigator.gpu) return;
+    if (prefersReducedMotion || isPhonePerformanceMode || !navigator.gpu) return;
     const canvas = document.createElement("canvas");
     canvas.className = "gpu-ambient";
     canvas.setAttribute("aria-hidden", "true");
@@ -963,7 +972,14 @@
         canvas.height = Math.max(1, Math.round(window.innerHeight * dpr));
       };
 
+      let lastRender = 0;
+      const renderInterval = 1000 / 60;
       const render = (now) => {
+        if (now - lastRender < renderInterval) {
+          window.requestAnimationFrame(render);
+          return;
+        }
+        lastRender = now;
         const light = document.documentElement.dataset.theme === "light" ? 1 : 0;
         const uniforms = new Float32Array([now * 0.001, window.__aarnavAudioEnergy || 0, light, canvas.width / canvas.height]);
         device.queue.writeBuffer(uniformBuffer, 0, uniforms);

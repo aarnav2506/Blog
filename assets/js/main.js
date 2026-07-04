@@ -1,4 +1,17 @@
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+const smallViewport = window.matchMedia("(max-width: 900px)").matches;
+const lowCoreDevice = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
+const lowMemoryDevice = navigator.deviceMemory && navigator.deviceMemory <= 4;
+const performanceMode = (() => {
+  if (prefersReducedMotion) return "reduced";
+  if (coarsePointer || smallViewport) return "phone";
+  return "full";
+})();
+const isPhonePerformanceMode = performanceMode === "phone";
+window.__aarnavPerformanceMode = performanceMode;
+document.documentElement.dataset.performance = performanceMode;
+document.documentElement.classList.toggle("performance-phone", isPhonePerformanceMode);
 
 const titleIconHref = "./assets/images/at-favicon-zoomed.png";
 ["icon", "apple-touch-icon"].forEach((rel) => {
@@ -196,7 +209,7 @@ if (idleAutoScrollEnabled) {
 }
 
 // Tactile ripple + press feedback on buttons.
-if (!prefersReducedMotion) {
+if (!prefersReducedMotion && !isPhonePerformanceMode) {
   document.querySelectorAll(".button, .icon-button, .play-button, .modal-close").forEach((control) => {
     control.addEventListener("pointerdown", (event) => {
       const rect = control.getBoundingClientRect();
@@ -1127,15 +1140,19 @@ if (canvas && context && !prefersReducedMotion) {
   let height = 0;
   let stars = [];
   let shooting = null;
+  let lastStarFrame = 0;
+  const starDprCap = isPhonePerformanceMode ? 1 : 1.75;
+  const starFrameInterval = isPhonePerformanceMode ? Infinity : 1000 / 60;
+  const starDensity = isPhonePerformanceMode ? 28000 : 14000;
 
   function resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, starDprCap);
     width = canvas.width = window.innerWidth * dpr;
     height = canvas.height = window.innerHeight * dpr;
     canvas.style.width = `${window.innerWidth}px`;
     canvas.style.height = `${window.innerHeight}px`;
 
-    const count = Math.max(90, Math.round((window.innerWidth * window.innerHeight) / 14000));
+    const count = Math.max(isPhonePerformanceMode ? 45 : 70, Math.round((window.innerWidth * window.innerHeight) / starDensity));
     stars = Array.from({ length: count }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
@@ -1145,7 +1162,12 @@ if (canvas && context && !prefersReducedMotion) {
     }));
   }
 
-  function drawStars() {
+  function drawStars(now = 0) {
+    if (Number.isFinite(starFrameInterval) && now - lastStarFrame < starFrameInterval) {
+      requestAnimationFrame(drawStars);
+      return;
+    }
+    lastStarFrame = now;
     context.clearRect(0, 0, width, height);
     const time = Date.now() * 0.00015;
     const isLightTheme = document.documentElement.dataset.theme === "light";
@@ -1181,7 +1203,7 @@ if (canvas && context && !prefersReducedMotion) {
       }
     }
 
-    if (!shooting && Math.random() < 0.012 + audioEnergy * 0.004) {
+    if (!isPhonePerformanceMode && !shooting && Math.random() < 0.012 + audioEnergy * 0.004) {
       const dpr = window.devicePixelRatio || 1;
       shooting = {
         x: Math.random() * width * 0.8,
@@ -1207,10 +1229,13 @@ if (canvas && context && !prefersReducedMotion) {
       if (shooting.life <= 0) shooting = null;
     }
 
-    requestAnimationFrame(drawStars);
+    if (!isPhonePerformanceMode) requestAnimationFrame(drawStars);
   }
 
-  window.addEventListener("resize", resizeCanvas);
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+    if (isPhonePerformanceMode) drawStars();
+  });
   resizeCanvas();
   drawStars();
 }
