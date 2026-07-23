@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#070a12">
+  <title>Jarvis — Voice Assistant</title>
+  <style>
+    :root { --bg:#060811; --ink:#f3f6ff; --muted:#9ba6bd; --line:rgba(190,211,255,.14); --glass:rgba(17,24,42,.62); --cyan:#6de5ff; --violet:#9b8cff; }
+    * { box-sizing:border-box; }
+    html,body { min-height:100%; margin:0; }
+    body { overflow-x:hidden; background:var(--bg); color:var(--ink); font:500 15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    button { font:inherit; }
+    .app { isolation:isolate; position:relative; display:grid; grid-template-rows:auto 1fr auto; min-height:100svh; padding:20px clamp(20px,5vw,72px) 28px; overflow:hidden; }
+    .app::before { content:""; z-index:-2; position:absolute; inset:0; background:radial-gradient(ellipse 42% 35% at 50% 38%,rgba(71,103,214,.18),transparent 72%),radial-gradient(ellipse 25% 24% at 50% 45%,rgba(114,224,255,.08),transparent 70%),linear-gradient(135deg,#070914,#04050a); }
+    .app::after { content:""; z-index:-1; position:absolute; inset:0; opacity:.26; background-image:linear-gradient(rgba(147,166,219,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(147,166,219,.07) 1px,transparent 1px); background-size:42px 42px; mask-image:radial-gradient(circle at 50% 45%,black,transparent 76%); }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .brand { display:flex; gap:11px; align-items:center; letter-spacing:.16em; font-size:12px; font-weight:800; }
+    .brand-mark { width:13px; height:13px; border-radius:50%; background:var(--cyan); box-shadow:0 0 0 5px rgba(109,229,255,.12),0 0 22px var(--cyan); }
+    .connection { color:var(--muted); font-size:12px; display:flex; align-items:center; gap:8px; }
+    .connection i { width:7px;height:7px;border-radius:50%;background:#83f4b9;box-shadow:0 0 12px #83f4b9; }
+    main { width:min(100%,920px); margin:auto; display:grid; justify-items:center; align-content:center; padding:24px 0 16px; }
+    .orb-stage { position:relative; width:clamp(250px,46vw,430px); aspect-ratio:1; display:grid; place-items:center; }
+    .orb-stage::before,.orb-stage::after { content:""; position:absolute; border-radius:50%; pointer-events:none; }
+    .orb-stage::before { inset:7%; border:1px solid rgba(160,191,255,.12); box-shadow:0 0 60px rgba(93,115,255,.16),inset 0 0 46px rgba(71,184,255,.08); animation:spin 18s linear infinite; }
+    .orb-stage::after { inset:16%; border:1px dashed rgba(136,223,255,.18); animation:spin 11s linear infinite reverse; }
+    canvas { width:100%; height:100%; filter:drop-shadow(0 0 22px rgba(90,182,255,.38)); }
+    .state-pill { position:absolute; bottom:1%; left:50%; transform:translateX(-50%); white-space:nowrap; padding:7px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(6,10,22,.75); color:#b9c5de; font-size:11px; letter-spacing:.1em; text-transform:uppercase; backdrop-filter:blur(14px); }
+    .copy { width:min(100%,680px); text-align:center; margin-top:-4px; }
+    .eyebrow { color:var(--cyan); letter-spacing:.16em; text-transform:uppercase; font-size:11px; font-weight:800; }
+    h1 { margin:9px 0 0; min-height:2.55em; font-size:clamp(22px,3.2vw,37px); line-height:1.25; letter-spacing:-.04em; font-weight:650; text-wrap:balance; }
+    .helper { margin:10px auto 0; min-height:1.5em; color:var(--muted); font-size:14px; }
+    .prompts { display:grid; grid-template-columns:repeat(3,1fr); width:min(100%,760px); gap:10px; margin-top:30px; }
+    .prompt { min-height:80px; padding:15px; text-align:left; color:#dce5f6; cursor:pointer; border:1px solid var(--line); border-radius:16px; background:linear-gradient(135deg,rgba(25,34,58,.72),rgba(12,17,31,.62)); transition:transform .2s, border-color .2s,background .2s; }
+    .prompt:hover,.prompt:focus-visible { outline:none; transform:translateY(-3px); border-color:rgba(109,229,255,.54); background:rgba(30,43,74,.8); }
+    .prompt span { display:block; color:var(--cyan); font-size:11px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:5px; }
+    .dock { align-self:end; display:flex; align-items:center; justify-content:center; gap:14px; padding-top:14px; }
+    .control { display:grid; place-items:center; width:48px; height:48px; border:1px solid var(--line); border-radius:50%; background:var(--glass); color:var(--ink); cursor:pointer; backdrop-filter:blur(14px); transition:transform .18s,border-color .18s,background .18s; }
+    .control:hover,.control:focus-visible { outline:none; transform:translateY(-2px); border-color:rgba(109,229,255,.68); background:rgba(29,40,68,.85); }
+    .control svg { width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round; }
+    .mic { width:68px; height:68px; border:0; color:#07101e; background:linear-gradient(140deg,#baf6ff,#73b7ff 53%,#a798ff); box-shadow:0 0 0 7px rgba(116,185,255,.11),0 12px 35px rgba(74,159,255,.28); }
+    .mic:hover,.mic:focus-visible { background:linear-gradient(140deg,#d6fbff,#89c3ff 53%,#b9adff); }
+    .mic.active { animation:micPulse 1.2s ease-in-out infinite; }
+    .control.active:not(.mic) { color:var(--cyan); border-color:rgba(109,229,255,.65); }
+    .notice { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100% - 36px); padding:9px 14px; border:1px solid var(--line); border-radius:12px; background:rgba(16,22,39,.88); color:#c5d0e5; text-align:center; font-size:12px; opacity:0; pointer-events:none; transition:opacity .2s; }
+    .notice.show { opacity:1; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes micPulse { 50% { transform:scale(1.07); box-shadow:0 0 0 13px rgba(116,185,255,.08),0 12px 35px rgba(74,159,255,.44); } }
+    @media (max-width:600px) { .app { padding:18px 18px 24px; } .connection { font-size:10px; } .orb-stage { width:min(78vw,355px); } main { align-content:start; padding-top:32px; } .prompts { grid-template-columns:1fr; margin-top:24px; } .prompt { min-height:0; padding:13px 15px; } h1 { min-height:3.7em; } }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar"><div class="brand"><span class="brand-mark"></span>JARVIS</div><div class="connection"><i></i>Voice interface ready</div></header>
+    <main>
+      <div class="orb-stage"><canvas id="orb" aria-label="Animated Jarvis voice orb"></canvas><div class="state-pill" id="state">Ready to listen</div></div>
+      <section class="copy" aria-live="polite"><div class="eyebrow" id="speaker">Your personal assistant</div><h1 id="subtitle">How can I help you today?</h1><p class="helper" id="helper">Tap the microphone and speak naturally.</p></section>
+      <section class="prompts" aria-label="Suggested questions">
+        <button class="prompt" data-question="What can you help me with today?"><span>Explore</span>What can you help me with today?</button>
+        <button class="prompt" data-question="Give me a quick productivity tip."><span>Focus</span>Give me a quick productivity tip.</button>
+        <button class="prompt" data-question="Help me plan my next task."><span>Plan</span>Help me plan my next task.</button>
+      </section>
+    </main>
+    <footer class="dock">
+      <button class="control" id="sound" aria-label="Turn ambient sound on" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9.5a4 4 0 0 1 0 5"/><path d="M18.5 7a7.5 7.5 0 0 1 0 10"/></svg></button>
+      <button class="control mic" id="mic" aria-label="Start listening" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M8.5 21h7"/></svg></button>
+      <button class="control" id="close" aria-label="Stop current conversation"><svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg></button>
+    </footer>
+    <div class="notice" id="notice" role="status"></div>
+  </div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id), subtitle=$("subtitle"), helper=$("helper"), speaker=$("speaker"), stateLabel=$("state"), mic=$("mic"), sound=$("sound"), close=$("close"), notice=$("notice");
+  const app={ listening:false, speaking:false, recognition:null, transcript:"", audio:null, gain:null, ambient:false, level:.08, target:.08, noticeTimer:null };
+  const setText=(title,detail="")=>{ subtitle.textContent=title; helper.textContent=detail; };
+  const setMode=(mode)=>{ stateLabel.textContent=mode; speaker.textContent=mode === "Listening" ? "Live transcription" : mode === "Speaking" ? "Jarvis is responding" : "Your personal assistant"; };
+  const toast=t=>{ notice.textContent=t; notice.classList.add("show"); clearTimeout(app.noticeTimer); app.noticeTimer=setTimeout(()=>notice.classList.remove("show"),3600); };
+  function reset(keepText=false) { if(app.recognition) { try { app.recognition.abort(); } catch{} app.recognition=null; } speechSynthesis.cancel(); app.listening=app.speaking=false; app.target=.08; mic.classList.remove("active"); mic.setAttribute("aria-pressed","false"); mic.setAttribute("aria-label","Start listening"); setMode("Ready to listen"); if(!keepText) setText("How can I help you today?","Tap the microphone and speak naturally."); }
+  function response(input) { const q=input.toLowerCase(); if(q.includes("productivity")) return "Try a single twenty-five minute focus sprint. Pick one clear outcome, silence notifications, then take a five minute break."; if(q.includes("plan")||q.includes("task")) return "Start by naming the outcome. Then choose the smallest useful next step, set a short time block, and begin before refining the plan."; if(q.includes("help")||q.includes("what can")) return "I can listen to your questions, help shape ideas, and guide you through a focused next step. What would you like to work on?"; if(/hello|hi |hey/.test(q)) return "Hello. I am ready when you are."; return "I heard: " + input + ". I am ready to help you think it through."; }
+  function speak(text) { if(!("speechSynthesis" in window)) { toast("Speech replies are not available in this browser."); return; } speechSynthesis.cancel(); const utter=new SpeechSynthesisUtterance(text); utter.lang="en-US"; utter.rate=.98; utter.pitch=1; utter.onstart=()=>{ app.speaking=true; app.target=.72; setMode("Speaking"); setText(text,"Tap × at any time to stop."); }; utter.onend=utter.onerror=()=>{ app.speaking=false; app.target=.08; setMode("Ready to listen"); }; speechSynthesis.speak(utter); }
+  function answer(text) { reset(true); setText(text,"Thinking through your request…"); setMode("Thinking"); app.target=.35; setTimeout(()=>speak(response(text)),260); }
+  function listen() { const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition; if(!Recognition) { toast("Live speech recognition needs Chrome or Edge, opened over HTTPS or localhost."); setText("Voice recognition is unavailable.","You can still use one of the suggested questions."); return; } reset(true); const r=new Recognition(); app.recognition=r; app.transcript=""; r.lang=navigator.language||"en-US"; r.interimResults=true; r.continuous=false; r.maxAlternatives=1; r.onstart=()=>{ app.listening=true; app.target=.95; mic.classList.add("active"); mic.setAttribute("aria-pressed","true"); mic.setAttribute("aria-label","Stop listening"); setMode("Listening"); setText("I’m listening…","Speak naturally — your words will appear here."); }; r.onresult=e=>{ let final="", interim=""; for(let i=e.resultIndex;i<e.results.length;i++) e.results[i].isFinal ? final+=e.results[i][0].transcript : interim+=e.results[i][0].transcript; if(final) app.transcript+=final; const visible=(app.transcript+interim).trim(); if(visible) setText(visible, interim ? "Listening…" : "Got it."); }; r.onerror=e=>{ if(e.error!=="aborted"&&e.error!=="no-speech") { toast(e.error === "not-allowed" ? "Please allow microphone access, then try again." : "Voice input couldn’t start. Please try again."); } }; r.onend=()=>{ const text=app.transcript.trim(); app.listening=false; mic.classList.remove("active"); mic.setAttribute("aria-pressed","false"); if(text) answer(text); else if(!app.speaking) { app.target=.08; setMode("Ready to listen"); setText("I didn’t catch that.","Tap the microphone and try again."); } }; r.start(); }
+  mic.addEventListener("click",()=>app.listening?reset(true):listen()); close.addEventListener("click",()=>{ reset(); toast("Conversation stopped."); }); document.querySelectorAll(".prompt").forEach(b=>b.addEventListener("click",()=>answer(b.dataset.question)));
+  function ambient() { const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return toast("Ambient sound is unavailable in this browser."); if(!app.audio) { app.audio=new Ctx(); app.gain=app.audio.createGain(); app.gain.gain.value=.025; app.gain.connect(app.audio.destination); [174,261].forEach((f,i)=>{ const o=app.audio.createOscillator(), g=app.audio.createGain(); o.type=i?"sine":"triangle"; o.frequency.value=f; g.gain.value=i?.38:.18; o.connect(g).connect(app.gain); o.start(); }); } app.audio.resume(); app.ambient=!app.ambient; app.gain.gain.setTargetAtTime(app.ambient?.025:0,app.audio.currentTime,.08); sound.classList.toggle("active",app.ambient); sound.setAttribute("aria-pressed",String(app.ambient)); sound.setAttribute("aria-label",app.ambient?"Turn ambient sound off":"Turn ambient sound on"); toast(app.ambient?"Ambient sound on.":"Ambient sound off."); }
+  sound.addEventListener("click",ambient); window.addEventListener("beforeunload",()=>reset(true));
+  const canvas=$("orb"), ctx=canvas.getContext("2d"), dots=Array.from({length:760},(_,i)=>{const y=1-i/759*2,r=Math.sqrt(1-y*y),a=i*2.399963;return {x:Math.cos(a)*r,y,z:Math.sin(a)*r,p:Math.random()*6.28};}); let w,h,dpr;
+  function resize(){dpr=Math.min(devicePixelRatio||1,2);w=canvas.clientWidth;h=canvas.clientHeight;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);} addEventListener("resize",resize); resize();
+  function draw(t){ctx.clearRect(0,0,w,h); app.level+=(app.target-app.level)*.055; const l=app.level+.035*Math.sin(t*.002), c=w/2, cy=h/2, R=w*.29, rot=t*.00022; const g=ctx.createRadialGradient(c,cy,0,c,cy,R*1.75);g.addColorStop(0,`rgba(120,220,255,${.10+l*.16})`);g.addColorStop(.45,"rgba(93,126,255,.08)");g.addColorStop(1,"rgba(30,50,120,0)");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation="lighter"; for(const p of dots){let x=p.x*Math.cos(rot)-p.z*Math.sin(rot),z=p.x*Math.sin(rot)+p.z*Math.cos(rot),y=p.y;const pulse=1+l*.27+Math.sin(t*.0025+p.p)*(.018+l*.03),k=1/(2.8+z);ctx.fillStyle=`rgba(${z>0?160:92},${z>0?230:172},255,${.16+k*.58})`;ctx.beginPath();ctx.arc(c+x*R*pulse*k*2.8,cy+y*R*pulse*k*2.8,Math.max(.45,k*3),0,7);ctx.fill();}ctx.globalCompositeOperation="source-over";requestAnimationFrame(draw);} requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
