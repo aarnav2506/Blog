@@ -99,10 +99,8 @@ requestScrollProgress();
 
 let startBackgroundMusicForIdleScroll = () => {};
 
-const idleAutoScrollEnabled =
-  !prefersReducedMotion &&
-  window.matchMedia("(pointer: fine)").matches &&
-  !window.matchMedia("(max-width: 780px)").matches;
+// Scrolling and background audio must always be initiated deliberately by the visitor.
+const idleAutoScrollEnabled = false;
 
 if (idleAutoScrollEnabled) {
   const idleDelay = 10000;
@@ -921,20 +919,9 @@ if (audio && audioToggle) {
     }
   });
 
-  if (localStorage.getItem(audioStateKey) === "playing") {
-    playBackgroundMusic();
-
-    const resumeAfterAutoplayBlock = () => {
-      if (audio.paused && localStorage.getItem(audioStateKey) === "playing") {
-        playBackgroundMusic({ fromUser: true });
-      }
-    };
-
-    document.addEventListener("pointerdown", resumeAfterAutoplayBlock, { once: true });
-    document.addEventListener("keydown", resumeAfterAutoplayBlock, { once: true });
-  } else {
-    syncAudioButton(false);
-  }
+  audio.pause();
+  localStorage.setItem(audioStateKey, "paused");
+  syncAudioButton(false);
 
   pauseBackgroundMusicForVideo = () => {
     if (audio.paused) return;
@@ -1135,7 +1122,7 @@ document.addEventListener("keydown", (event) => {
 const canvas = document.querySelector("#starfield");
 const context = canvas?.getContext("2d");
 
-if (canvas && context && !prefersReducedMotion) {
+if (canvas && context && !prefersReducedMotion && !isPhonePerformanceMode) {
   let width = 0;
   let height = 0;
   let stars = [];

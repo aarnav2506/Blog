@@ -34,17 +34,24 @@
           </button>
         </div>
       </header>
-      <div class="ai-guide__messages" aria-live="polite">
-        <div class="ai-message">Hi, I am Aarnav's portfolio guide. Ask me about his books, coding, sports, guitar, places, or channels.</div>
+      <div class="ai-guide__orb-stage">
+        <canvas class="ai-guide__orb" width="600" height="600" aria-hidden="true"></canvas>
+        <span class="ai-guide__orb-state">Ready</span>
+      </div>
+      <div class="ai-guide__messages ai-guide__subtitle" aria-live="polite">Hi, I am Aarnav's portfolio guide. Ask me about his books, coding, sports, guitar, places, or channels.</div>
+      <div class="ai-guide__voice-controls">
+        <button class="ai-guide__voice-control" type="button" data-ai-close aria-label="Close voice assistant">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+        <button class="ai-guide__voice-control ai-guide__voice-control--mic" type="button" data-ai-mic aria-label="Start live voice conversation">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"></path></svg>
+        </button>
       </div>
       <div>
         <div class="ai-guide__suggestions" aria-label="Suggested questions">
           <button class="ai-suggestion" type="button">What books has Aarnav read?</button>
           <button class="ai-suggestion" type="button">What are his coding interests?</button>
           <button class="ai-suggestion" type="button">Which places has he visited?</button>
-          <button class="ai-suggestion" type="button">How did Aarnav create this website?</button>
-          <button class="ai-suggestion" type="button">Where is the music button?</button>
-          <button class="ai-suggestion" type="button">How do I find the Books page?</button>
         </div>
         <form class="ai-guide__form">
           <input class="ai-guide__input" type="text" maxlength="180" autocomplete="off" placeholder="Ask about Aarnav..." aria-label="Question for portfolio guide">
@@ -63,8 +70,10 @@
     const input = panel.querySelector(".ai-guide__input");
     const form = panel.querySelector(".ai-guide__form");
     const status = panel.querySelector(".ai-guide__status");
+    const orb = panel.querySelector(".ai-guide__orb");
+    const orbState = panel.querySelector(".ai-guide__orb-state");
     const speechButton = panel.querySelector("[data-ai-speech]");
-    const micButton = panel.querySelector("[data-ai-mic]");
+    const micButton = panel.querySelector(".ai-guide__voice-controls [data-ai-mic]");
     let speechEnabled = true;
     let recognition = null;
     let micPermissionLocked = false;
@@ -72,6 +81,95 @@
     let speechKeepAlive = null;
     let assistantAudio = null;
     let restoreMusicAfterSpeech = () => {};
+    let micStream = null;
+    let micAccessPromise = null;
+    let isListening = false;
+    let liveSession = false;
+    let startRecognition = null;
+    let liveResumeTimer = null;
+    let isResponding = false;
+    let finalTranscript = "";
+    let subtitleAnimationFrame = null;
+
+    const resumeLiveListening = () => {
+      window.clearTimeout(liveResumeTimer);
+      if (!liveSession || micPermissionLocked || !panel.classList.contains("is-open")) return;
+      liveResumeTimer = window.setTimeout(() => {
+        if (liveSession && !isListening && !assistantAudio && !window.speechSynthesis?.speaking) startRecognition?.();
+      }, 420);
+    };
+
+    const finishResponse = () => {
+      isResponding = false;
+      if (isListening) {
+        setOrbState("listening");
+        status.textContent = "Live voice mode is listening.";
+      } else {
+        setOrbState("ready");
+        resumeLiveListening();
+      }
+    };
+
+    const setOrbState = (nextState) => {
+      panel.dataset.voiceState = nextState;
+      orbState.textContent = nextState === "listening" ? "Listening" : nextState === "speaking" ? "Responding" : nextState === "thinking" ? "Thinking" : "Ready";
+    };
+
+    const initOrb = () => {
+      if (!orb) return;
+      const context = orb.getContext("2d");
+      let responseBlend = 0;
+      const particles = Array.from({ length: 1500 }, (_, index) => {
+        const y = 1 - (index / 1499) * 2;
+        const radius = Math.sqrt(1 - y * y);
+        const angle = index * 2.3999632297;
+        return { x: Math.cos(angle) * radius, y, z: Math.sin(angle) * radius, offset: Math.random() * Math.PI * 2, drift: .25 + Math.random() * .85, float: .3 + Math.random() * 1.1 };
+      });
+      const render = (time) => {
+        const size = orb.width;
+        context.clearRect(0, 0, size, size);
+        const state = panel.dataset.voiceState || "ready";
+        // Ease each visual response in and out so colour, motion, and glow transition together.
+        const responseTarget = state === "speaking" ? 1 : 0;
+        responseBlend += (responseTarget - responseBlend) * .045;
+        const energy = .12 + responseBlend * .52;
+        const center = size / 2;
+        const speaking = responseBlend > .012;
+        if (speaking) {
+          const glow = context.createRadialGradient(center, center, 0, center, center, size * .47);
+          glow.addColorStop(0, `rgba(255, 213, 91, ${(0.05 + energy * 0.16) * responseBlend})`);
+          glow.addColorStop(.52, `rgba(255, 166, 54, ${.12 * responseBlend})`);
+          glow.addColorStop(1, "rgba(255, 188, 72, 0)");
+          context.fillStyle = glow;
+          context.fillRect(0, 0, size, size);
+        }
+        context.globalCompositeOperation = "lighter";
+        const rotation = time * (.00009 + responseBlend * .00023);
+        particles.forEach((particle) => {
+          const randomX = Math.sin(time * .0017 * particle.drift + particle.offset) * (.035 + energy * .08);
+          const randomY = Math.cos(time * .0021 * (1.2 - particle.drift) + particle.offset * 1.7) * (.035 + energy * .08) + Math.sin(time * .0012 * particle.float + particle.offset) * (.055 + energy * .075);
+          const x = particle.x * Math.cos(rotation) - particle.z * Math.sin(rotation) + randomX;
+          const z = particle.x * Math.sin(rotation) + particle.z * Math.cos(rotation);
+          const y = particle.y + randomY;
+          const pulse = 1 + Math.sin(time * .003 + particle.offset) * (.018 + energy * .035) + energy * .1;
+          const scale = size * .31 * pulse / (2.8 + z);
+          context.beginPath();
+          const idleRed = z > 0 ? 228 : 74, idleGreen = z > 0 ? 244 : 163, idleBlue = 255;
+          const replyRed = z > 0 ? 255 : 218, replyGreen = z > 0 ? 238 : 154, replyBlue = z > 0 ? 151 : 46;
+          const red = idleRed + (replyRed - idleRed) * responseBlend;
+          const green = idleGreen + (replyGreen - idleGreen) * responseBlend;
+          const blue = idleBlue + (replyBlue - idleBlue) * responseBlend;
+          context.fillStyle = `rgba(${red}, ${green}, ${blue}, ${0.18 + (z + 1) * 0.15})`;
+          context.arc(center + x * scale * 2.3, center + y * scale * 2.3, Math.max(.7, size * .008 / (2.4 + z)), 0, Math.PI * 2);
+          context.fill();
+        });
+        context.globalCompositeOperation = "source-over";
+        window.requestAnimationFrame(render);
+      };
+      window.requestAnimationFrame(render);
+    };
+    initOrb();
+    setOrbState("ready");
 
     const fallbackBooks = ["Atomic Habits", "Roald Dahl", "Sudha Murty", "Treasure Island", "Sherlock Holmes"];
     const fallbackPlaces = [
@@ -280,11 +378,24 @@
     };
 
     const addMessage = (text, fromUser = false) => {
-      const message = document.createElement("div");
-      message.className = `ai-message${fromUser ? " ai-message--user" : ""}`;
-      message.textContent = text;
-      messages.append(message);
-      messages.scrollTop = messages.scrollHeight;
+      messages.classList.toggle("is-user-question", fromUser);
+      window.cancelAnimationFrame(subtitleAnimationFrame);
+
+      if (fromUser) {
+        messages.textContent = text;
+        return;
+      }
+
+      messages.textContent = "";
+      const duration = Math.min(Math.max(text.length * 18, 900), 10000);
+      const startedAt = performance.now();
+      const typeReply = (now) => {
+        const progress = Math.min((now - startedAt) / duration, 1);
+        const count = Math.floor(text.length * progress);
+        messages.textContent = text.slice(0, count);
+        if (progress < 1) subtitleAnimationFrame = window.requestAnimationFrame(typeReply);
+      };
+      subtitleAnimationFrame = window.requestAnimationFrame(typeReply);
     };
 
     const pickVoice = () => {
@@ -302,6 +413,7 @@
     };
 
     const stopSpeaking = () => {
+      setOrbState("ready");
       if (speechTimer) {
         window.clearTimeout(speechTimer);
         speechTimer = null;
@@ -349,9 +461,14 @@
 
       const voiceClip = findAssistantVoiceClip(text);
       if (voiceClip) {
+        setOrbState("speaking");
         assistantAudio = new Audio(assistantVoicePath(voiceClip.file));
         assistantAudio.volume = 1;
-        assistantAudio.addEventListener("ended", restoreMusicAfterSpeech, { once: true });
+        assistantAudio.addEventListener("ended", () => {
+          restoreMusicAfterSpeech();
+          assistantAudio = null;
+          finishResponse();
+        }, { once: true });
         assistantAudio.addEventListener("error", () => {
           restoreMusicAfterSpeech();
           assistantAudio = null;
@@ -374,10 +491,12 @@
         return;
       }
       const chunks = splitSpeechText(text);
+      setOrbState("speaking");
       let index = 0;
       const speakNextChunk = () => {
         if (!speechEnabled || index >= chunks.length) {
           stopSpeaking();
+          finishResponse();
           return;
         }
         const utterance = new SpeechSynthesisUtterance(chunks[index]);
@@ -389,12 +508,12 @@
         utterance.addEventListener("end", () => {
           index += 1;
           if (index < chunks.length) speechTimer = window.setTimeout(speakNextChunk, 80);
-          else stopSpeaking();
+          else { stopSpeaking(); finishResponse(); }
         }, { once: true });
         utterance.addEventListener("error", () => {
           index += 1;
           if (index < chunks.length) speechTimer = window.setTimeout(speakNextChunk, 120);
-          else stopSpeaking();
+          else { stopSpeaking(); finishResponse(); }
         }, { once: true });
         window.speechSynthesis.speak(utterance);
         window.speechSynthesis.resume();
@@ -412,6 +531,7 @@
       addMessage(cleanQuestion, true);
       input.value = "";
       status.textContent = "Searching approved portfolio information...";
+      setOrbState("thinking");
       const answer = answerQuestion(cleanQuestion);
       addMessage(answer);
       speak(answer);
@@ -422,14 +542,21 @@
       panel.classList.toggle("is-open", open);
       panel.setAttribute("aria-hidden", String(!open));
       toggle.setAttribute("aria-expanded", String(open));
-      if (open) window.setTimeout(() => input.focus(), 180);
       if (!open && "speechSynthesis" in window) {
+        liveSession = false;
+        window.clearTimeout(liveResumeTimer);
+        recognition?.abort();
         stopSpeaking();
       }
     };
 
     toggle.addEventListener("click", () => setOpen(!panel.classList.contains("is-open")));
-    panel.querySelector("[data-ai-close]").addEventListener("click", () => setOpen(false));
+    panel.querySelector(".ai-guide__voice-controls [data-ai-close]").addEventListener("click", () => {
+      liveSession = false;
+      window.clearTimeout(liveResumeTimer);
+      recognition?.abort();
+      setOpen(false);
+    });
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       ask(input.value);
@@ -455,47 +582,106 @@
       window.speechSynthesis.addEventListener("voiceschanged", pickVoice);
     }
 
+    const requestMicAccess = () => {
+      if (micStream) return Promise.resolve(micStream);
+      if (micAccessPromise) return micAccessPromise;
+      if (!navigator.mediaDevices?.getUserMedia) return Promise.reject(new Error("Microphone access is unavailable."));
+      micAccessPromise = navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+        micStream = stream;
+        status.textContent = "Microphone ready. You can ask another question whenever you like.";
+        return stream;
+      }).catch((error) => {
+        micAccessPromise = null;
+        throw error;
+      });
+      return micAccessPromise;
+    };
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
-      recognition = new SpeechRecognition();
-      recognition.lang = "en-IN";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.addEventListener("start", () => {
-        micButton.classList.add("is-active");
-        status.textContent = "Listening...";
-      });
-      recognition.addEventListener("result", (event) => {
-        const transcript = event.results[0][0].transcript;
-        input.value = transcript;
-        speechEnabled = true;
-        speechButton.classList.add("is-active");
-        ask(transcript);
-      });
-      recognition.addEventListener("end", () => micButton.classList.remove("is-active"));
-      recognition.addEventListener("error", (event) => {
-        micButton.classList.remove("is-active");
-        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          micPermissionLocked = true;
-          micButton.disabled = true;
-          micButton.classList.remove("is-active");
-          micButton.title = "Refresh the page to try voice input again";
-          micButton.setAttribute("aria-label", "Voice input locked until refresh");
-          status.textContent = "Microphone permission was not granted. I will not ask again until you refresh the page.";
-          return;
-        }
-        status.textContent = "Voice input could not start. You can still type your question.";
-      });
-      micButton.addEventListener("click", () => {
-        if (micPermissionLocked) {
-          status.textContent = "Voice input is locked until refresh, so I will not ask for microphone permission again.";
-          return;
+      startRecognition = () => {
+        if (!liveSession || isListening) return;
+        if (!recognition) {
+          recognition = new SpeechRecognition();
+          recognition.lang = "en-IN";
+          recognition.interimResults = true;
+          recognition.continuous = true;
+          recognition.maxAlternatives = 1;
+          recognition.addEventListener("start", () => {
+            isListening = true;
+            micButton.classList.add("is-active");
+            if (!isResponding) setOrbState("listening");
+            status.textContent = "Live voice mode is listening.";
+          });
+          recognition.addEventListener("result", (event) => {
+            if (isResponding) return;
+            let interim = "";
+            for (let index = event.resultIndex; index < event.results.length; index += 1) {
+              const text = event.results[index][0].transcript;
+              if (event.results[index].isFinal) finalTranscript += text;
+              else interim += text;
+            }
+            const visibleText = (finalTranscript || interim).trim();
+            input.value = visibleText;
+            if (visibleText) addMessage(visibleText, true);
+            if (finalTranscript.trim()) {
+              const question = finalTranscript.trim();
+              finalTranscript = "";
+              isResponding = true;
+              speechEnabled = true;
+              speechButton.classList.add("is-active");
+              ask(question);
+            }
+          });
+          recognition.addEventListener("end", () => {
+            isListening = false;
+            micButton.classList.remove("is-active");
+            if (!isResponding) setOrbState("ready");
+            if (!isResponding) resumeLiveListening();
+          });
+          recognition.addEventListener("error", (event) => {
+            isListening = false;
+            micButton.classList.remove("is-active");
+            if (!isResponding) setOrbState("ready");
+            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+              micPermissionLocked = true;
+              liveSession = false;
+              status.textContent = "The browser blocked microphone access. Change the browser permission, then refresh once.";
+            } else if (event.error !== "aborted" && event.error !== "no-speech") status.textContent = "Voice input paused. I will keep the live session ready.";
+          });
         }
         try {
           recognition.start();
         } catch {
-          if (!micPermissionLocked) recognition.stop();
+          isListening = false;
+          micButton.classList.remove("is-active");
+          setOrbState("ready");
+          status.textContent = "Voice input is already starting. Please try again in a moment.";
         }
+      };
+      micButton.addEventListener("click", () => {
+        if (liveSession) {
+          liveSession = false;
+          window.clearTimeout(liveResumeTimer);
+          recognition?.abort();
+          stopSpeaking();
+          micButton.classList.remove("is-active");
+          micButton.setAttribute("aria-label", "Start live voice conversation");
+          status.textContent = "Live voice mode stopped.";
+          return;
+        }
+        if (micPermissionLocked) {
+          status.textContent = "Microphone access was blocked by the browser. Refresh only if you want to change that choice.";
+          return;
+        }
+        liveSession = true;
+        micButton.classList.add("is-active");
+        micButton.setAttribute("aria-label", "Stop live voice conversation");
+        requestMicAccess().then(startRecognition).catch(() => {
+          liveSession = false;
+          micButton.classList.remove("is-active");
+          status.textContent = "Please allow microphone access to use voice questions.";
+        });
       });
     } else {
       micButton.disabled = true;
