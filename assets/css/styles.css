@@ -2477,3 +2477,29 @@ html.performance-phone [data-reveal] {
   transform: none;
   transition: none;
 }
+
+/* Mobile performance profile: Android and iPhone use a quiet, plain background. */
+html.performance-phone,
+html.performance-phone body {
+  background: #050505 !important;
+}
+
+html.performance-phone #starfield,
+html.performance-phone .texture-noise,
+html.performance-phone .aurora,
+html.performance-phone .gpu-ambient {
+  display: none !important;
+}
+
+html.performance-phone body::after {
+  display: none;
+}
+
+html.performance-phone .glass-card,
+html.performance-phone .site-header,
+html.performance-phone .theme-toggle,
+html.performance-phone .audio-popover,
+html.performance-phone .insta-popover {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
