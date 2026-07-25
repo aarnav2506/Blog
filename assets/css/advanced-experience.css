@@ -596,7 +596,7 @@ html.performance-phone .ai-guide-toggle__orb {
 .ai-guide__form { gap: .45rem; padding: .72rem .85rem .8rem; border-top: 1px solid var(--line); }
 .ai-guide__input { min-height: 2.9rem; }
 .ai-guide__status { display: none; }
-@media (max-width: 480px) { .ai-guide { height: calc(100dvh - 5.4rem); } .ai-guide__orb { width: min(91%, 390px); } .ai-guide__messages.ai-guide__subtitle { min-height: 4.8rem; font-size: .84rem; } }
+@media (max-width: 480px) { .ai-guide { height: calc(100svh - 5.4rem); } .ai-guide__orb { width: min(91%, 410px); } .ai-guide__messages.ai-guide__subtitle { min-height: 4.8rem; font-size: .84rem; } }
 @media (prefers-reduced-motion: reduce) { .ai-guide__orb-stage::before { animation: none; } }
 
 /* Full-screen Jarvis voice mode. The page stays behind this focused voice surface. */
@@ -605,7 +605,7 @@ html.performance-phone .ai-guide-toggle__orb {
   left: 0;
   bottom: 0;
   width: 100vw;
-  height: 100dvh;
+  height: 100svh;
   max-height: none;
   grid-template-rows: minmax(0, 1fr) auto auto;
   border: 0;
@@ -618,7 +618,7 @@ html.performance-phone .ai-guide-toggle__orb {
 .ai-guide__form { display: none; }
 .ai-guide__orb-stage { background: transparent; }
 .ai-guide__orb-stage::before { display: none; }
-.ai-guide__orb { width: min(70vw, 430px); filter: none; }
+.ai-guide__orb { width: min(75vw, 460px); filter: none; }
 .ai-guide[data-voice-state="listening"] .ai-guide__orb { filter: none; }
 .ai-guide[data-voice-state="speaking"] .ai-guide__orb { filter: drop-shadow(0 0 24px rgba(255,207,77,.45)); }
 .ai-guide__orb-state { display: none; }
@@ -642,4 +642,4 @@ html.performance-phone .ai-guide-toggle__orb {
 .ai-guide__voice-control svg { width: 1.35rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .ai-guide__voice-control--mic.is-active { color: #fff; background: #2d9eb0; box-shadow: 0 0 0 8px rgba(45,158,176,.13); animation: jarvis-live 1.35s ease-in-out infinite; }
 @keyframes jarvis-live { 50% { transform: scale(1.08); } }
-@media (min-width: 720px) { .ai-guide__orb { width: min(42vw, 480px); } }
+@media (min-width: 720px) { .ai-guide__orb { width: min(45vw, 510px); } }

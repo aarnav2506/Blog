@@ -2482,6 +2482,12 @@ html.performance-phone [data-reveal] {
 html.performance-phone,
 html.performance-phone body {
   background: #050505 !important;
+  overscroll-behavior-y: none;
+}
+
+html.performance-phone body {
+  min-height: 100svh;
+  touch-action: pan-y;
 }
 
 html.performance-phone #starfield,
@@ -2502,4 +2508,13 @@ html.performance-phone .audio-popover,
 html.performance-phone .insta-popover {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+html.performance-phone .hero::before,
+html.performance-phone .portrait-orbit,
+html.performance-phone .hero-visual,
+html.performance-phone .portrait-frame {
+  transform: none !important;
+  transition: none !important;
+  will-change: auto;
 }
