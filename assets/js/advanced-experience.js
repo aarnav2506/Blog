@@ -90,6 +90,7 @@
     let isResponding = false;
     let finalTranscript = "";
     let subtitleAnimationFrame = null;
+    let responseLanguage = "en-US";
 
     const resumeLiveListening = () => {
       window.clearTimeout(liveResumeTimer);
@@ -119,13 +120,27 @@
       if (!orb) return;
       const context = orb.getContext("2d");
       let responseBlend = 0;
-      const particles = Array.from({ length: 1500 }, (_, index) => {
-        const y = 1 - (index / 1499) * 2;
+      const particleCount = isPhonePerformanceMode ? 720 : 1500;
+      const particles = Array.from({ length: particleCount }, (_, index) => {
+        const y = 1 - (index / (particleCount - 1)) * 2;
         const radius = Math.sqrt(1 - y * y);
         const angle = index * 2.3999632297;
-        return { x: Math.cos(angle) * radius, y, z: Math.sin(angle) * radius, offset: Math.random() * Math.PI * 2, drift: .25 + Math.random() * .85, float: .3 + Math.random() * 1.1 };
+        const shell = .78 + Math.random() * .3;
+        return {
+          x: Math.cos(angle) * radius * shell + (Math.random() - .5) * .09,
+          y: y * (.84 + Math.random() * .2) + (Math.random() - .5) * .11,
+          z: Math.sin(angle) * radius * shell + (Math.random() - .5) * .09,
+          offset: Math.random() * Math.PI * 2,
+          drift: .25 + Math.random() * .85,
+          float: .3 + Math.random() * 1.1,
+          pointSize: .5 + Math.random() * .75,
+        };
       });
       const render = (time) => {
+        if (document.visibilityState !== "visible") {
+          window.setTimeout(() => window.requestAnimationFrame(render), 240);
+          return;
+        }
         const size = orb.width;
         context.clearRect(0, 0, size, size);
         const state = panel.dataset.voiceState || "ready";
@@ -160,7 +175,7 @@
           const green = idleGreen + (replyGreen - idleGreen) * responseBlend;
           const blue = idleBlue + (replyBlue - idleBlue) * responseBlend;
           context.fillStyle = `rgba(${red}, ${green}, ${blue}, ${0.18 + (z + 1) * 0.15})`;
-          context.arc(center + x * scale * 2.3, center + y * scale * 2.3, Math.max(.7, size * .008 / (2.4 + z)), 0, Math.PI * 2);
+          context.arc(center + x * scale * 2.3, center + y * scale * 2.3, Math.max(.38, size * .0046 * particle.pointSize / (2.4 + z)), 0, Math.PI * 2);
           context.fill();
         });
         context.globalCompositeOperation = "source-over";
@@ -184,6 +199,33 @@
     };
 
     const normalizeText = (text) => text.toLowerCase().replace(/[^a-z0-9\s']/g, " ").replace(/\s+/g, " ").trim();
+
+    const detectResponseLanguage = (text) => {
+      if (/[\u0980-\u09FF]/.test(text)) return "bn-IN";
+      if (/[\u0900-\u097F]/.test(text)) return "hi-IN";
+      return "en-US";
+    };
+
+    const localizeAnswer = (question, englishAnswer) => {
+      const language = detectResponseLanguage(question);
+      if (language === "hi-IN") {
+        if (/किताब|पुस्तक|बुक/.test(question)) return "Aarnav की पोर्टफोलियो में Atomic Habits, Roald Dahl, Sudha Murty, Treasure Island और Sherlock Holmes की किताबें शामिल हैं। पूरी सूची Books पेज पर है।";
+        if (/कोड|प्रोग्राम|टेक|वेबसाइट/.test(question)) return "Aarnav को उपयोगी और अच्छे दिखने वाले इंटरफेस, टूल और प्रोजेक्ट बनाना पसंद है। उन्होंने यह वेबसाइट HTML, CSS, JavaScript और AI टूल्स की मदद से बनाई है।";
+        if (/खेल|बैडमिंटन|फुटबॉल|बास्केटबॉल/.test(question)) return "Aarnav को फुटबॉल, बास्केटबॉल और बैडमिंटन पसंद हैं। उन्होंने अंडर-15 बैडमिंटन नेशनल्स में भी भाग लिया है।";
+        if (/जगह|यात्रा|घूम|स्थान/.test(question)) return "Aarnav की यात्रा यादों में Havelock Island, Neil Island, Darjeeling, Eco Park, Marina Beach और कई मंदिर व कोलकाता की जगहें शामिल हैं।";
+        if (/नाम|कौन|उम्र|कहाँ/.test(question)) return "Aarnav Thakur कोलकाता, भारत के 17 वर्षीय छात्र, कोडर, खिलाड़ी और क्रिएटर हैं।";
+        return "मैं Aarnav के पोर्टफोलियो की मंजूर जानकारी के आधार पर जवाब दे सकता हूँ। आप किताबों, कोडिंग, खेल, गिटार, यात्रा या चैनलों के बारे में पूछ सकते हैं।";
+      }
+      if (language === "bn-IN") {
+        if (/বই|কিতাব/.test(question)) return "Aarnav-এর পোর্টফোলিওতে Atomic Habits, Roald Dahl, Sudha Murty, Treasure Island এবং Sherlock Holmes-এর বই রয়েছে। সম্পূর্ণ তালিকা Books পেজে আছে।";
+        if (/কোড|প্রোগ্রাম|টেক|ওয়েবসাইট/.test(question)) return "Aarnav ব্যবহারযোগ্য ও সুন্দর ইন্টারফেস, টুল এবং প্রজেক্ট তৈরি করতে ভালোবাসে। সে HTML, CSS, JavaScript এবং AI টুল ব্যবহার করে এই ওয়েবসাইটটি তৈরি করেছে।";
+        if (/খেলা|ব্যাডমিন্টন|ফুটবল|বাস্কেটবল/.test(question)) return "Aarnav ফুটবল, বাস্কেটবল এবং ব্যাডমিন্টন পছন্দ করে। সে অনূর্ধ্ব-15 ব্যাডমিন্টন ন্যাশনালসেও অংশ নিয়েছে।";
+        if (/ভ্রমণ|জায়গা|স্থান|ঘুর/.test(question)) return "Aarnav-এর ভ্রমণের তালিকায় Havelock Island, Neil Island, Darjeeling, Eco Park, Marina Beach এবং আরও কয়েকটি জায়গা রয়েছে।";
+        if (/নাম|কে|বয়স|কোথ/.test(question)) return "Aarnav Thakur কলকাতা, ভারতের 17 বছরের ছাত্র, কোডার, খেলোয়াড় এবং ক্রিয়েটর।";
+        return "আমি Aarnav-এর পোর্টফোলিওর অনুমোদিত তথ্য থেকে উত্তর দিতে পারি। বই, কোডিং, খেলা, গিটার, ভ্রমণ বা চ্যানেল সম্পর্কে প্রশ্ন করুন।";
+      }
+      return englishAnswer;
+    };
 
     const assistantVoicePath = (fileName) => `./assets/audio/assistant/${encodeURIComponent(fileName)}`;
 
@@ -219,6 +261,14 @@
       {
         match: (text) => text.startsWith("I can answer like a smart portfolio guide"),
         file: "E-girl-2026-06-23-14-45-I-can-answer-like-a-smart-portfolio-guide-using.mp3",
+      },
+      {
+        match: (text) => text.startsWith("The portfolio identifies Aarnav as 17 years old"),
+        file: "E-girl-2026-07-25-12-21-The-portfolio-identifies-Aarnav-as-17-years-old.mp3",
+      },
+      {
+        match: (text) => text.startsWith("Play With Aarnav for guitar and Techno Savvy for"),
+        file: "E-girl-2026-07-25-12-20-Play-With-Aarnav-for-guitar-and-Techno-Savvy-for.mp3",
       },
     ];
 
@@ -274,6 +324,16 @@
         title: "Online",
         keywords: ["contact", "find", "instagram", "online", "social", "profile"],
         answer: "Use the Find Me page or the Instagram button to reach Aarnav's approved public profiles.",
+      },
+      {
+        title: "Portfolio pages",
+        keywords: ["pages", "page", "sections", "section", "portfolio has", "portfolio include", "website contain", "website sections"],
+        answer: "The portfolio has Home, Interests, Books, Places, and Find Me pages. Together they cover Aarnav's profile, skills, reading, travel memories, and approved public links.",
+      },
+      {
+        title: "Creator channels",
+        keywords: ["play with aarnav", "techno savvy", "creator channel", "guitar channel", "tech channel", "channel names"],
+        answer: "Play With Aarnav for guitar and Techno Savvy for tech and creator content. Both channels are linked from the portfolio.",
       },
     ];
 
@@ -362,6 +422,9 @@
       if (/\b(how|what)\b.*\b(website|site|portfolio)\b.*\b(create|created|made|make|built|build|design|designed|develop|developed|code|coded)\b|\b(website|site|portfolio)\b.*\b(how|made|created|built)\b/.test(query)) {
         return resolveKnowledgeAnswer(portfolioKnowledge.find((item) => item.title === "Website creation"));
       }
+      if (/\b(channel|channels)\b/.test(query) && /\b(what|which|name|names|are)\b/.test(query)) {
+        return resolveKnowledgeAnswer(portfolioKnowledge.find((item) => item.title === "Creator channels"));
+      }
       if (navigationAnswer) {
         return navigationAnswer;
       }
@@ -398,8 +461,11 @@
       subtitleAnimationFrame = window.requestAnimationFrame(typeReply);
     };
 
-    const pickVoice = () => {
+    const pickVoice = (preferredLanguage = "en-US") => {
       const voices = window.speechSynthesis?.getVoices?.() || [];
+      const languageRoot = preferredLanguage.split("-")[0];
+      const languageVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith(languageRoot.toLowerCase()));
+      if (languageRoot !== "en" && languageVoice) return languageVoice;
       const jarvisStylePattern = /(microsoft.*(david|guy|mark|ryan|george|thomas)|google.*(uk english male|us english)|english.*male|natural.*male|online.*male|neural.*male|david|guy|mark|ryan|george|thomas)/i;
       const naturalVoicePattern = /(google|microsoft|natural|online|neural|aria|jenny|guy|david|mark|ryan|george|thomas|sonia|zira)/i;
       return voices.find((voice) => voice.lang.startsWith("en") && jarvisStylePattern.test(voice.name))
@@ -500,11 +566,11 @@
           return;
         }
         const utterance = new SpeechSynthesisUtterance(chunks[index]);
-        utterance.lang = "en-US";
+        utterance.lang = responseLanguage;
         utterance.rate = 0.82;
         utterance.pitch = 0.72;
         utterance.volume = 1;
-        utterance.voice = pickVoice();
+        utterance.voice = pickVoice(responseLanguage);
         utterance.addEventListener("end", () => {
           index += 1;
           if (index < chunks.length) speechTimer = window.setTimeout(speakNextChunk, 80);
@@ -532,7 +598,8 @@
       input.value = "";
       status.textContent = "Searching approved portfolio information...";
       setOrbState("thinking");
-      const answer = answerQuestion(cleanQuestion);
+      responseLanguage = detectResponseLanguage(cleanQuestion);
+      const answer = localizeAnswer(cleanQuestion, answerQuestion(cleanQuestion));
       addMessage(answer);
       speak(answer);
       status.textContent = "Typed questions stay local. Voice recognition is provided by your browser.";

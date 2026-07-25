@@ -571,15 +571,17 @@ if (counterItems.length && !prefersReducedMotion) {
   counterItems.forEach((item) => counterObserver.observe(item));
 }
 
-document.querySelectorAll(".glass-card, .feature-card, .book-card, .place-card, .timeline-card, .video-card, .contact-card, .stat-card").forEach((card) => {
-  card.addEventListener("pointermove", (event) => {
-    const rect = card.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    card.style.setProperty("--cursor-x", `${x}%`);
-    card.style.setProperty("--cursor-y", `${y}%`);
+if (!isPhonePerformanceMode) {
+  document.querySelectorAll(".glass-card, .feature-card, .book-card, .place-card, .timeline-card, .video-card, .contact-card, .stat-card").forEach((card) => {
+    card.addEventListener("pointermove", (event) => {
+      const rect = card.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+      card.style.setProperty("--cursor-x", `${x}%`);
+      card.style.setProperty("--cursor-y", `${y}%`);
+    });
   });
-});
+}
 
 const featuredGuitarVideoId = "VsbFO2rWAP0";
 document.querySelectorAll("#guitarRail .video-card:first-child, #creatorRail .video-card:first-child").forEach((card) => {
@@ -599,7 +601,7 @@ document.querySelectorAll("#guitarRail .video-card:first-child, #creatorRail .vi
   }
 });
 
-if (!prefersReducedMotion) {
+if (!prefersReducedMotion && !isPhonePerformanceMode) {
   let parallaxX = 0;
   let parallaxY = 0;
   let velX = 0;
