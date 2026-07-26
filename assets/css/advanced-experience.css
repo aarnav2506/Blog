@@ -550,6 +550,28 @@ html.performance-phone .ai-guide-toggle__orb {
   animation: none;
 }
 
+/* Keep the Ask Aarnav entry point reachable while Android browser controls
+   expand or collapse during a scroll. */
+@media (max-width: 980px) {
+  .ai-guide-toggle {
+    left: max(0.75rem, env(safe-area-inset-left));
+    bottom: calc(0.875rem + env(safe-area-inset-bottom));
+    z-index: 1104;
+  }
+}
+
+html.performance-phone .ai-guide-toggle {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: translate3d(0, 0, 0) !important;
+  transition: none !important;
+  animation: none !important;
+  will-change: auto;
+  backface-visibility: hidden;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* Voice guide: full Jarvis voice surface */
 .ai-guide {
   grid-template-rows: auto minmax(0, 1fr) auto auto;
