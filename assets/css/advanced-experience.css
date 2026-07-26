@@ -572,6 +572,11 @@ html.performance-phone .ai-guide-toggle {
   backdrop-filter: none;
 }
 
+html.performance-phone .ai-guide,
+html.performance-phone .ai-guide-toggle {
+  box-shadow: none !important;
+}
+
 /* Voice guide: full Jarvis voice surface */
 .ai-guide {
   grid-template-rows: auto minmax(0, 1fr) auto auto;
@@ -665,3 +670,21 @@ html.performance-phone .ai-guide-toggle {
 .ai-guide__voice-control--mic.is-active { color: #fff; background: #2d9eb0; box-shadow: 0 0 0 8px rgba(45,158,176,.13); animation: jarvis-live 1.35s ease-in-out infinite; }
 @keyframes jarvis-live { 50% { transform: scale(1.08); } }
 @media (min-width: 720px) { .ai-guide__orb { width: min(45vw, 510px); } }
+
+/* Larger but still contained voice sphere for Android phones. */
+@media (max-width: 719px) {
+  html.performance-phone .ai-guide__orb {
+    width: min(88vw, 430px);
+  }
+
+  html.performance-phone .ai-guide-toggle {
+    width: 2.85rem;
+    min-height: 2.85rem;
+    left: max(0.625rem, env(safe-area-inset-left));
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+
+  html.performance-phone .ai-guide-toggle__orb {
+    width: 1.4rem;
+  }
+}

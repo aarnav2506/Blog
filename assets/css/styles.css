@@ -2563,3 +2563,66 @@ html.performance-phone .floating-actions .icon-button::after {
   animation: none !important;
   filter: none;
 }
+
+/* Lightweight Android paint profile: retain the layout and colours while
+   removing the most expensive repeated blur, shadow, and offscreen painting. */
+html.performance-phone .site-header,
+html.performance-phone .glass-card,
+html.performance-phone .feature-card,
+html.performance-phone .book-card,
+html.performance-phone .place-card,
+html.performance-phone .video-card,
+html.performance-phone .hero-card,
+html.performance-phone .status-card,
+html.performance-phone .modal-content,
+html.performance-phone .audio-popover,
+html.performance-phone .insta-popover {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+html.performance-phone .glass-card,
+html.performance-phone .feature-card,
+html.performance-phone .book-card,
+html.performance-phone .place-card,
+html.performance-phone .video-card {
+  contain: layout paint;
+}
+
+/* Compact fixed actions on phones so every control stays inside the viewport. */
+@media (max-width: 480px) {
+  html.performance-phone .theme-toggle {
+    width: 3rem;
+    height: 2rem;
+    right: calc(max(0.625rem, env(safe-area-inset-right)) + 3.05rem);
+  }
+
+  html.performance-phone .theme-toggle__track {
+    width: 2.18rem;
+    height: 1.12rem;
+  }
+
+  html.performance-phone .theme-toggle__thumb {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  html.performance-phone .theme-toggle__thumb {
+    left: 0.1rem;
+  }
+
+  html.performance-phone[data-theme="light"] .theme-toggle__thumb {
+    left: 1.18rem;
+  }
+
+  html.performance-phone .floating-actions {
+    right: max(0.625rem, env(safe-area-inset-right));
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    gap: 0.45rem;
+  }
+
+  html.performance-phone .floating-actions .icon-button {
+    width: 2.65rem;
+    height: 2.65rem;
+  }
+}
