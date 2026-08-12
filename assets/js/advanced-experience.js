@@ -602,15 +602,38 @@
       speechTimer = window.setTimeout(speakNextChunk, 90);
     };
 
-    const ask = (question) => {
+    const askGeminiBackend = async (question) => {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Chatbot request failed.");
+      return data.reply;
+    };
+
+    const ask = async (question) => {
       const cleanQuestion = question.trim();
       if (!cleanQuestion) return;
       addMessage(cleanQuestion, true);
       input.value = "";
-      status.textContent = "Searching approved portfolio information...";
+      status.textContent = "Thinking...";
       setOrbState("thinking");
       responseLanguage = detectResponseLanguage(cleanQuestion);
-      const answer = localizeAnswer(cleanQuestion, answerQuestion(cleanQuestion));
+      const localAnswer = answerQuestion(cleanQuestion);
+      const localFallback = "I can answer like a smart portfolio guide using only approved site information. Try asking a more specific question about Aarnav's books, coding, sports, guitar, places, age, AI tools, channels, or where to find a page or button.";
+      let answer = localAnswer;
+
+      if (localAnswer === localFallback) {
+        try {
+          answer = await askGeminiBackend(cleanQuestion);
+        } catch {
+          answer = localFallback;
+        }
+      }
+
+      answer = localizeAnswer(cleanQuestion, answer);
       addMessage(answer);
       speak(answer);
       status.textContent = "Typed questions stay local. Voice recognition is provided by your browser.";
