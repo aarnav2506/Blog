@@ -120,7 +120,13 @@
       if (!orb) return;
       const context = orb.getContext("2d");
       let responseBlend = 0;
-      const particleCount = isPhonePerformanceMode ? 720 : 1500;
+      // Phones draw a deliberately lighter orb. It stays detailed at the
+      // larger mobile size without monopolising the browser's render thread.
+      const particleCount = isPhonePerformanceMode ? 420 : 1500;
+      // Target a high-refresh mobile animation; the browser will naturally
+      // cap rendering at the device display's supported refresh rate.
+      const phoneFrameInterval = isPhonePerformanceMode ? 1000 / 100 : 0;
+      let lastPhoneFrame = 0;
       const particles = Array.from({ length: particleCount }, (_, index) => {
         const y = 1 - (index / (particleCount - 1)) * 2;
         const radius = Math.sqrt(1 - y * y);
@@ -141,6 +147,11 @@
           window.setTimeout(() => window.requestAnimationFrame(render), 240);
           return;
         }
+        if (phoneFrameInterval && time - lastPhoneFrame < phoneFrameInterval) {
+          window.requestAnimationFrame(render);
+          return;
+        }
+        lastPhoneFrame = time;
         const size = orb.width;
         context.clearRect(0, 0, size, size);
         const state = panel.dataset.voiceState || "ready";
@@ -770,6 +781,7 @@
     if (!audio || prefersReducedMotion) return;
 
     const trackProfiles = [
+      { hue: "255, 190, 130", secondHue: "196, 112, 178", accentHue: "123, 232, 255", tempo: 0.82, depth: 0.6 },
       { hue: "70, 232, 255", secondHue: "109, 166, 255", accentHue: "239, 201, 120", tempo: 1.22, depth: 0.72 },
       { hue: "109, 166, 255", secondHue: "74, 101, 198", accentHue: "123, 232, 255", tempo: 0.72, depth: 0.52 },
       { hue: "239, 201, 120", secondHue: "255, 156, 92", accentHue: "123, 232, 255", tempo: 0.94, depth: 0.64 },
@@ -1153,7 +1165,8 @@
   }
 
   async function initWebGpuAmbient() {
-    if (prefersReducedMotion || isPhonePerformanceMode || !navigator.gpu) return;
+    // The desktop background video replaces this full-screen GPU pass.
+    if (prefersReducedMotion || isPhonePerformanceMode || document.documentElement.classList.contains("has-background-video") || !navigator.gpu) return;
     const canvas = document.createElement("canvas");
     canvas.className = "gpu-ambient";
     canvas.setAttribute("aria-hidden", "true");

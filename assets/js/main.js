@@ -1,17 +1,21 @@
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
 const smallViewport = window.matchMedia("(max-width: 900px)").matches;
-const lowCoreDevice = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
-const lowMemoryDevice = navigator.deviceMemory && navigator.deviceMemory <= 4;
 const performanceMode = (() => {
   if (prefersReducedMotion) return "reduced";
   if (coarsePointer || smallViewport) return "phone";
   return "full";
 })();
 const isPhonePerformanceMode = performanceMode === "phone";
+const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+const shouldUseDesktopVideo = performanceMode === "full"
+  && !connection?.saveData;
 window.__aarnavPerformanceMode = performanceMode;
 document.documentElement.dataset.performance = performanceMode;
 document.documentElement.classList.toggle("performance-phone", isPhonePerformanceMode);
+const isHomePage = /(?:^|\/)index(?:\.html?)?$/.test(window.location.pathname)
+  || /\/$/.test(window.location.pathname);
+document.documentElement.classList.toggle("home-page", isHomePage);
 
 const titleIconHref = "./assets/images/at-favicon-zoomed.png";
 ["icon", "apple-touch-icon"].forEach((rel) => {
@@ -47,6 +51,51 @@ function applyTheme(theme) {
 }
 
 applyTheme(activeTheme);
+
+// A muted video is much lighter than the previous desktop canvas stack. It is
+// kept off phones, tablets, reduced-motion sessions, and data-saving connections.
+function initDesktopVideoBackground() {
+  if (!shouldUseDesktopVideo) return;
+
+  const video = document.createElement("video");
+  video.className = "site-background-video";
+  video.src = "./assets/video/portfolio-background.mp4";
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = "metadata";
+  video.setAttribute("aria-hidden", "true");
+  video.setAttribute("disablepictureinpicture", "");
+  video.setAttribute("tabindex", "-1");
+  document.body.prepend(video);
+  document.documentElement.classList.add("has-background-video");
+  document.body.classList.add("has-background-video");
+
+  const playForward = () => {
+    video.playbackRate = 1;
+    video.play().catch(() => {});
+  };
+
+  video.addEventListener("loadedmetadata", () => {
+    video.currentTime = 0;
+    if (document.visibilityState === "visible") playForward();
+  }, { once: true });
+
+  // Restart from the first frame after the forward playback reaches the end.
+  video.addEventListener("ended", () => {
+    video.currentTime = 0;
+    playForward();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") {
+      video.pause();
+      return;
+    }
+
+    playForward();
+  });
+}
+
+initDesktopVideoBackground();
 
 const siteHeader = document.querySelector(".site-header");
 if (siteHeader) {
@@ -227,6 +276,18 @@ if (!prefersReducedMotion && !isPhonePerformanceMode) {
 document.querySelectorAll(".channel-avatar img").forEach((image) => {
   image.src = "./assets/images/youtube-play-with-aarnav.jpg";
   image.alt = "Play With Aarnav YouTube channel photo";
+});
+
+const technoSavvyChannelUrl = "https://www.youtube.com/@technosavvy2506";
+document.querySelectorAll("a[href]").forEach((link) => {
+  if (link.href.includes("youtube.com/@technosavvy")) {
+    link.href = technoSavvyChannelUrl;
+  }
+});
+document.querySelectorAll("[data-channel-url]").forEach((item) => {
+  if (item.dataset.channelUrl?.includes("youtube.com/@technosavvy")) {
+    item.dataset.channelUrl = technoSavvyChannelUrl;
+  }
 });
 
 const heroTitle = document.querySelector(".hero-copy h1 .gradient-text");
@@ -639,6 +700,7 @@ let resumeBackgroundMusicAfterVideo = () => {};
 
 if (audio && audioToggle) {
   const audioPlaylist = [
+    { title: "Bare Minimum (Slowed)", src: "./assets/audio/bare-minimum-slowed.mp3" },
     { title: "Minecraft Theme", src: "./assets/audio/minecraft-theme.mp3" },
     { title: "Subwoofer Lullaby", src: "./assets/audio/1-03. Subwoofer Lullaby.mp3" },
     { title: "Haggstrom", src: "./assets/audio/1-07. Haggstrom.mp3" },
@@ -647,12 +709,21 @@ if (audio && audioToggle) {
   const audioStateKey = "aarnav-bgm-state";
   const audioTrackKey = "aarnav-bgm-track";
   const audioTimeKey = "aarnav-bgm-time";
+  const audioPlaylistVersionKey = "aarnav-bgm-playlist-version";
+  const audioPlaylistVersion = "2026-08-12-bare-minimum";
   let isLeavingPage = false;
   let isChangingTrack = false;
   let isVideoPausingMusic = false;
   let shouldResumeAfterVideo = false;
   let hasUserPausedIdleMusic = false;
   let pendingIdleMusicStart = false;
+
+  if (localStorage.getItem(audioPlaylistVersionKey) !== audioPlaylistVersion) {
+    localStorage.setItem(audioTrackKey, "0");
+    localStorage.setItem(audioTimeKey, "0");
+    localStorage.setItem(audioPlaylistVersionKey, audioPlaylistVersion);
+  }
+
   const savedAudioTimeOnLoad = Number.parseFloat(localStorage.getItem(audioTimeKey) || "0");
   let hasRestoredAudioTime = !(Number.isFinite(savedAudioTimeOnLoad) && savedAudioTimeOnLoad > 0);
 
@@ -664,7 +735,7 @@ if (audio && audioToggle) {
   audioPopover.className = "audio-popover";
   audioPopover.innerHTML = `
     <strong>Music queue</strong>
-    <p>Choose a track. The playlist keeps looping all four songs.</p>
+    <p>Choose a track. The playlist keeps looping every song.</p>
     <div class="audio-track-list"></div>
     <button class="audio-pause-control" type="button">Pause music</button>
   `;
@@ -1124,7 +1195,8 @@ document.addEventListener("keydown", (event) => {
 const canvas = document.querySelector("#starfield");
 const context = canvas?.getContext("2d");
 
-if (canvas && context && !prefersReducedMotion && !isPhonePerformanceMode) {
+if (canvas && context && !prefersReducedMotion && !isPhonePerformanceMode
+  && !document.documentElement.classList.contains("has-background-video")) {
   let width = 0;
   let height = 0;
   let stars = [];
