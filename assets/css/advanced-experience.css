@@ -16,6 +16,15 @@
   --audio-string-speed: 240ms;
 }
 
+/* Keep the light theme cool and neutral while retaining the audio response. */
+html[data-theme="light"] {
+  --audio-primary-rgb: 42, 150, 184;
+  --audio-secondary-rgb: 74, 119, 172;
+  --audio-accent-rgb: 126, 153, 126;
+  --audio-saturate: 0.86;
+  --audio-ambient-brightness: 1.02;
+}
+
 .gpu-ambient {
   position: fixed;
   inset: 0;
@@ -501,6 +510,28 @@ html[data-theme="light"] .globe-location {
   background: rgba(22, 58, 105, 0.055);
 }
 
+/* The full-screen voice surface is declared later than the compact assistant,
+   so it needs its own light-theme override. */
+html[data-theme="light"] .ai-guide {
+  background: rgba(247, 251, 255, 0.9);
+  color: var(--text);
+}
+
+html[data-theme="light"] .ai-guide__messages.ai-guide__subtitle,
+html[data-theme="light"] .ai-guide__subtitle.is-user-question {
+  color: var(--text);
+}
+
+html[data-theme="light"] .ai-guide__voice-control {
+  background: rgba(15, 29, 52, 0.1);
+  color: var(--text);
+}
+
+html[data-theme="light"] .ai-guide__voice-control:hover,
+html[data-theme="light"] .ai-guide__voice-control:focus-visible {
+  background: rgba(15, 29, 52, 0.16);
+}
+
 @media (max-width: 780px) {
   .ai-guide-toggle span:last-child { display: none; }
   .ai-guide-toggle { width: 3.2rem; padding: 0; justify-content: center; }
@@ -645,7 +676,7 @@ html.performance-phone .ai-guide-toggle {
 .ai-guide__form { display: none; }
 .ai-guide__orb-stage { background: transparent; }
 .ai-guide__orb-stage::before { display: none; }
-.ai-guide__orb { width: min(75vw, 460px); filter: none; }
+.ai-guide__orb { width: min(82vw, 540px); filter: none; }
 .ai-guide[data-voice-state="listening"] .ai-guide__orb { filter: none; }
 .ai-guide[data-voice-state="speaking"] .ai-guide__orb { filter: drop-shadow(0 0 24px rgba(255,207,77,.45)); }
 .ai-guide__orb-state { display: none; }
@@ -669,12 +700,12 @@ html.performance-phone .ai-guide-toggle {
 .ai-guide__voice-control svg { width: 1.35rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .ai-guide__voice-control--mic.is-active { color: #fff; background: #2d9eb0; box-shadow: 0 0 0 8px rgba(45,158,176,.13); animation: jarvis-live 1.35s ease-in-out infinite; }
 @keyframes jarvis-live { 50% { transform: scale(1.08); } }
-@media (min-width: 720px) { .ai-guide__orb { width: min(45vw, 510px); } }
+@media (min-width: 720px) { .ai-guide__orb { width: min(50vw, 570px); } }
 
 /* Larger but still contained voice sphere for Android phones. */
 @media (max-width: 719px) {
   html.performance-phone .ai-guide__orb {
-    width: min(88vw, 430px);
+    width: min(92vw, 470px);
   }
 
   html.performance-phone .ai-guide-toggle {

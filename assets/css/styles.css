@@ -61,12 +61,61 @@ body {
   line-height: 1.6;
 }
 
+/* Desktop video background: the content remains above a soft, readable veil. */
+html.has-background-video {
+  background: #03040b;
+}
+
+body.has-background-video {
+  background: transparent;
+}
+
+.site-background-video {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  filter: saturate(0.9) brightness(0.58) contrast(1.05);
+  transform: translateZ(0);
+}
+
+body.has-background-video::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, rgba(2, 5, 16, 0.7), rgba(5, 8, 20, 0.38) 52%, rgba(11, 5, 24, 0.58)),
+    radial-gradient(circle at 18% 14%, rgba(66, 223, 255, 0.1), transparent 32%);
+}
+
+html[data-theme="light"] .site-background-video {
+  filter: saturate(0.72) brightness(1.14) contrast(0.82);
+}
+
+html[data-theme="light"] body.has-background-video::before {
+  background:
+    linear-gradient(112deg, rgba(244, 249, 255, 0.68), rgba(236, 244, 255, 0.44) 52%, rgba(249, 246, 255, 0.64)),
+    radial-gradient(circle at 18% 14%, rgba(77, 171, 216, 0.12), transparent 32%);
+}
+
+html.has-background-video #starfield,
+html.has-background-video .texture-noise,
+html.has-background-video .aurora {
+  display: none;
+}
+
 html[data-theme="light"] body {
   background:
-    radial-gradient(circle at 15% 9%, rgba(40, 95, 199, 0.22), transparent 24%),
-    radial-gradient(circle at 84% 15%, rgba(112, 73, 189, 0.18), transparent 23%),
-    radial-gradient(circle at 44% 80%, rgba(0, 127, 159, 0.14), transparent 27%),
-    linear-gradient(180deg, #f8fbff 0%, #eaf3ff 46%, #f8fbff 100%);
+    radial-gradient(circle at 15% 9%, rgba(48, 126, 184, 0.18), transparent 24%),
+    radial-gradient(circle at 84% 15%, rgba(76, 119, 177, 0.13), transparent 23%),
+    radial-gradient(circle at 44% 80%, rgba(37, 156, 171, 0.11), transparent 27%),
+    linear-gradient(180deg, #f7fbff 0%, #e8f1f8 46%, #f7fbff 100%);
 }
 
 a {
@@ -170,10 +219,14 @@ html[data-theme="light"] .texture-noise {
 }
 
 html[data-theme="light"] .aurora {
-  filter: blur(78px) saturate(1.15);
-  mix-blend-mode: multiply;
-  opacity: 0.26;
+  filter: blur(78px) saturate(0.82);
+  mix-blend-mode: soft-light;
+  opacity: 0.2;
 }
+
+html[data-theme="light"] .aurora-one { background: rgba(58, 157, 198, 0.2); }
+html[data-theme="light"] .aurora-two { background: rgba(91, 126, 178, 0.16); }
+html[data-theme="light"] .aurora-three { background: rgba(125, 166, 151, 0.13); }
 
 .scroll-progress {
   position: fixed;
@@ -2449,6 +2502,15 @@ html.performance-phone .floating-actions .icon-button::before {
   animation: none !important;
 }
 
+/* Keep the fixed controls still on the phone home page, matching the other
+   page tabs without changing their positions or click behavior. */
+html.performance-phone.home-page .theme-toggle,
+html.performance-phone.home-page .floating-actions .icon-button,
+html.performance-phone.home-page .ai-guide-toggle {
+  animation: none !important;
+  transform: none !important;
+}
+
 html.performance-phone .site-header,
 html.performance-phone .glass-card,
 html.performance-phone .feature-card,
@@ -2493,7 +2555,8 @@ html.performance-phone body {
 html.performance-phone #starfield,
 html.performance-phone .texture-noise,
 html.performance-phone .aurora,
-html.performance-phone .gpu-ambient {
+html.performance-phone .gpu-ambient,
+html.performance-phone .site-background-video {
   display: none !important;
 }
 
