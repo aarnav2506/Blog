@@ -657,8 +657,36 @@ html.performance-phone .ai-guide-toggle {
 @media (max-width: 480px) { .ai-guide { height: calc(100svh - 5.4rem); } .ai-guide__orb { width: min(91%, 410px); } .ai-guide__messages.ai-guide__subtitle { min-height: 4.8rem; font-size: .84rem; } }
 @media (prefers-reduced-motion: reduce) { .ai-guide__orb-stage::before { animation: none; } }
 
-/* Full-screen Jarvis voice mode. The page stays behind this focused voice surface. */
-.ai-guide {
+/* Ask Aarnav opens as a compact text-first panel. Voice mode expands it into
+   the existing animated sphere only after the microphone is pressed. */
+.ai-guide:not(.is-voice-mode) {
+  inset: auto;
+  left: clamp(1rem, 2vw, 1.6rem);
+  bottom: clamp(5.1rem, 8vw, 5.7rem);
+  width: min(520px, calc(100vw - 2rem));
+  height: auto;
+  max-height: min(650px, calc(100vh - 7rem));
+  grid-template-rows: auto auto auto;
+}
+
+.ai-guide:not(.is-voice-mode) .ai-guide__orb-stage,
+.ai-guide:not(.is-voice-mode) .ai-guide__voice-controls {
+  display: none;
+}
+
+.ai-guide:not(.is-voice-mode) .ai-guide__messages.ai-guide__subtitle {
+  min-height: 4.5rem;
+  place-items: end start;
+  padding: 1rem 1rem 0.6rem;
+  text-align: left;
+}
+
+.ai-guide:not(.is-voice-mode) .ai-guide__suggestions {
+  display: none;
+}
+
+/* Full-screen Jarvis voice mode appears only after the microphone is pressed. */
+.ai-guide.is-voice-mode {
   inset: 0;
   left: 0;
   bottom: 0;
@@ -671,16 +699,16 @@ html.performance-phone .ai-guide-toggle {
   background: #171717;
   box-shadow: none;
 }
-.ai-guide__header,
-.ai-guide__suggestions,
-.ai-guide__form { display: none; }
-.ai-guide__orb-stage { background: transparent; }
-.ai-guide__orb-stage::before { display: none; }
-.ai-guide__orb { width: min(82vw, 540px); filter: none; }
-.ai-guide[data-voice-state="listening"] .ai-guide__orb { filter: none; }
-.ai-guide[data-voice-state="speaking"] .ai-guide__orb { filter: drop-shadow(0 0 24px rgba(255,207,77,.45)); }
-.ai-guide__orb-state { display: none; }
-.ai-guide__messages.ai-guide__subtitle {
+.ai-guide.is-voice-mode .ai-guide__header,
+.ai-guide.is-voice-mode .ai-guide__suggestions,
+.ai-guide.is-voice-mode .ai-guide__form { display: none; }
+.ai-guide.is-voice-mode .ai-guide__orb-stage { background: transparent; }
+.ai-guide.is-voice-mode .ai-guide__orb-stage::before { display: none; }
+.ai-guide.is-voice-mode .ai-guide__orb { width: min(82vw, 540px); filter: none; }
+.ai-guide.is-voice-mode[data-voice-state="listening"] .ai-guide__orb { filter: none; }
+.ai-guide.is-voice-mode[data-voice-state="speaking"] .ai-guide__orb { filter: drop-shadow(0 0 24px rgba(255,207,77,.45)); }
+.ai-guide.is-voice-mode .ai-guide__orb-state { display: none; }
+.ai-guide.is-voice-mode .ai-guide__messages.ai-guide__subtitle {
   min-height: 4.6rem;
   max-height: none;
   margin: 0;
@@ -693,18 +721,18 @@ html.performance-phone .ai-guide-toggle {
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
-.ai-guide__subtitle.is-user-question { color: #fff; }
-.ai-guide__voice-controls { display: flex; justify-content: center; gap: 2.35rem; padding: .45rem 1.5rem 1.55rem; }
-.ai-guide__voice-control { display: grid; width: 3.5rem; aspect-ratio: 1; place-items: center; border: 0; border-radius: 50%; background: #242424; color: #e5e5e5; cursor: pointer; transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease; }
-.ai-guide__voice-control:hover,.ai-guide__voice-control:focus-visible { outline: none; transform: scale(1.06); background: #303030; }
-.ai-guide__voice-control svg { width: 1.35rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
-.ai-guide__voice-control--mic.is-active { color: #fff; background: #2d9eb0; box-shadow: 0 0 0 8px rgba(45,158,176,.13); animation: jarvis-live 1.35s ease-in-out infinite; }
+.ai-guide.is-voice-mode .ai-guide__subtitle.is-user-question { color: #fff; }
+.ai-guide.is-voice-mode .ai-guide__voice-controls { display: flex; justify-content: center; gap: 2.35rem; padding: .45rem 1.5rem 1.55rem; }
+.ai-guide.is-voice-mode .ai-guide__voice-control { display: grid; width: 3.5rem; aspect-ratio: 1; place-items: center; border: 0; border-radius: 50%; background: #242424; color: #e5e5e5; cursor: pointer; transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease; }
+.ai-guide.is-voice-mode .ai-guide__voice-control:hover,.ai-guide.is-voice-mode .ai-guide__voice-control:focus-visible { outline: none; transform: scale(1.06); background: #303030; }
+.ai-guide.is-voice-mode .ai-guide__voice-control svg { width: 1.35rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.ai-guide.is-voice-mode .ai-guide__voice-control--mic.is-active { color: #fff; background: #2d9eb0; box-shadow: 0 0 0 8px rgba(45,158,176,.13); animation: jarvis-live 1.35s ease-in-out infinite; }
 @keyframes jarvis-live { 50% { transform: scale(1.08); } }
-@media (min-width: 720px) { .ai-guide__orb { width: min(50vw, 570px); } }
+@media (min-width: 720px) { .ai-guide.is-voice-mode .ai-guide__orb { width: min(50vw, 570px); } }
 
 /* Larger but still contained voice sphere for Android phones. */
 @media (max-width: 719px) {
-  html.performance-phone .ai-guide__orb {
+  html.performance-phone .ai-guide.is-voice-mode .ai-guide__orb {
     width: min(92vw, 470px);
   }
 
@@ -718,4 +746,429 @@ html.performance-phone .ai-guide-toggle {
   html.performance-phone .ai-guide-toggle__orb {
     width: 1.4rem;
   }
+}
+
+/* Ask Aarnav modal: a focused text chat first, with voice mode inside the
+   same dialog instead of replacing the whole page. */
+.ai-guide {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: grid;
+  width: auto;
+  height: auto;
+  max-height: none;
+  padding: clamp(1rem, 4vw, 3rem);
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: rgba(1, 3, 9, 0.66);
+  backdrop-filter: blur(18px) saturate(0.78);
+  -webkit-backdrop-filter: blur(18px) saturate(0.78);
+  box-shadow: none;
+  opacity: 0;
+  transform: none;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.ai-guide.is-open {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.ai-guide__dialog {
+  position: relative;
+  display: grid;
+  width: min(50rem, 100%);
+  height: min(35rem, calc(100svh - 4rem));
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(62, 81, 121, 0.16), transparent 42%),
+    #111216;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateY(12px) scale(0.985);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ai-guide.is-open .ai-guide__dialog { transform: translateY(0) scale(1); }
+
+.ai-guide__compact-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  display: grid;
+  width: 2.2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.64);
+  cursor: pointer;
+}
+
+.ai-guide__compact-close:hover,
+.ai-guide__compact-close:focus-visible { background: rgba(255, 255, 255, 0.08); color: #fff; outline: none; }
+.ai-guide__compact-close svg { width: 1.15rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 1.8; }
+
+.ai-guide:not(.is-voice-mode) .ai-guide__orb-stage,
+.ai-guide:not(.is-voice-mode) .ai-guide__voice-controls { display: none; }
+
+.ai-guide:not(.is-voice-mode) .ai-guide__messages.ai-guide__subtitle {
+  display: grid;
+  min-height: 0;
+  margin: 0;
+  padding: 4.5rem clamp(1.5rem, 7vw, 4rem) 2rem;
+  place-items: center;
+  overflow: auto;
+  border: 0;
+  background: transparent;
+  color: #f7f8fb;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 500;
+  line-height: 1.32;
+  text-align: center;
+}
+
+.ai-guide:not(.is-voice-mode) .ai-guide__subtitle.is-user-question { color: #f7f8fb; }
+
+.ai-guide__form {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.35rem;
+  margin: 0 clamp(0.8rem, 2vw, 1.2rem) clamp(1rem, 2vw, 1.25rem);
+  padding: 0.34rem 0.38rem 0.34rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  background: #2b2b2e;
+}
+
+.ai-guide__input {
+  min-height: 3rem;
+  padding: 0 0.25rem;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f8f8fa;
+  font-size: 1rem;
+}
+
+.ai-guide__input::placeholder { color: rgba(255, 255, 255, 0.58); }
+
+.ai-guide__form-mic,
+.ai-guide__voice-entry {
+  display: grid;
+  width: 2.65rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.ai-guide__form-mic { background: transparent; color: rgba(255, 255, 255, 0.82); }
+.ai-guide__form-mic:hover { background: rgba(255, 255, 255, 0.08); }
+.ai-guide__voice-entry { background: #3172da; color: #fff; box-shadow: 0 5px 16px rgba(49, 114, 218, 0.34); }
+.ai-guide__voice-entry:hover { background: #4683e6; transform: scale(1.04); }
+.ai-guide__form-mic svg,
+.ai-guide__voice-entry svg { width: 1.2rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.ai-guide__status { display: none; }
+
+.ai-guide.is-voice-mode .ai-guide__dialog {
+  width: min(46rem, 100%);
+  height: min(46rem, calc(100svh - 2rem));
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  border-radius: 30px;
+  background: #171717;
+}
+
+.ai-guide.is-voice-mode .ai-guide__compact-close,
+.ai-guide.is-voice-mode .ai-guide__form { display: none; }
+
+.ai-guide.is-voice-mode .ai-guide__orb-stage {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 50%, rgba(89, 168, 255, 0.16), transparent 62%);
+}
+
+.ai-guide.is-voice-mode .ai-guide__orb-stage::before { display: block; }
+.ai-guide.is-voice-mode .ai-guide__orb { width: min(76%, 470px); }
+.ai-guide.is-voice-mode .ai-guide__messages.ai-guide__subtitle {
+  display: grid;
+  min-height: 4.8rem;
+  margin: 0;
+  padding: 0.8rem 1.75rem;
+  place-items: center;
+  color: #fff;
+  font-size: clamp(0.92rem, 2.2vw, 1.1rem);
+  text-align: center;
+}
+
+.ai-guide.is-voice-mode .ai-guide__voice-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.55rem 1.5rem 1.5rem;
+}
+
+.ai-guide.is-voice-mode .ai-guide__voice-control {
+  display: grid;
+  width: 3.25rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  background: #29292b;
+  color: #f1f1f3;
+  cursor: pointer;
+}
+
+.ai-guide.is-voice-mode .ai-guide__voice-control:hover { background: #353539; transform: scale(1.05); }
+.ai-guide.is-voice-mode .ai-guide__voice-control svg { width: 1.2rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.ai-guide.is-voice-mode .ai-guide__voice-control--mic { background: #3172da; }
+.ai-guide.is-voice-mode .ai-guide__voice-control--mic:hover { background: #4683e6; }
+
+@media (max-width: 580px) {
+  .ai-guide { padding: 0.75rem; }
+  .ai-guide__dialog { height: min(34rem, calc(100svh - 1.5rem)); border-radius: 22px; }
+  .ai-guide:not(.is-voice-mode) .ai-guide__messages.ai-guide__subtitle { padding: 3.8rem 1.25rem 1.5rem; font-size: 1.35rem; }
+  .ai-guide.is-voice-mode .ai-guide__dialog { height: calc(100svh - 1.5rem); border-radius: 22px; }
+  .ai-guide.is-voice-mode .ai-guide__orb { width: min(88%, 390px); }
+}
+
+/* Final text chat layout: no page blur, a readable left-side conversation,
+   and the existing voice sphere contained in the same panel. */
+.ai-guide {
+  inset: auto;
+  left: clamp(0.8rem, 2vw, 1.6rem);
+  bottom: clamp(5rem, 7vw, 5.8rem);
+  display: block;
+  width: min(34rem, calc(100vw - 1.6rem));
+  height: auto;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.ai-guide__dialog {
+  width: 100%;
+  height: min(42rem, calc(100svh - 7rem));
+  border-radius: 24px;
+  background: #171719;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.ai-guide:not(.is-voice-mode) .ai-guide__messages.ai-guide__subtitle,
+.ai-guide.is-voice-mode .ai-guide__messages.ai-guide__subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 1rem;
+  min-height: 0;
+  margin: 0;
+  padding: 3.9rem 1.35rem 1.2rem;
+  overflow-y: auto;
+  color: #f5f5f6;
+  font-size: 0.98rem;
+  font-weight: 400;
+  line-height: 1.58;
+  text-align: left;
+  scrollbar-width: thin;
+}
+
+.ai-message {
+  width: fit-content;
+  max-width: min(92%, 42rem);
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 17px 17px 17px 5px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #f0f1f4;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.ai-message--assistant { align-self: flex-start; }
+.ai-message--user {
+  align-self: flex-end;
+  border-color: rgba(92, 146, 255, 0.34);
+  border-radius: 17px 17px 5px 17px;
+  background: #2f6fcf;
+  color: #fff;
+}
+
+.ai-message p { margin: 0 0 0.75rem; }
+.ai-message p:last-child { margin-bottom: 0; }
+.ai-message ul,
+.ai-message ol { margin: 0.1rem 0 0.75rem 1.25rem; padding: 0; }
+.ai-message li { margin: 0.26rem 0; padding-left: 0.1rem; }
+.ai-message__heading { display: block; margin: 0 0 0.5rem; color: #fff; font-size: 1.02em; }
+
+.ai-guide__form { margin: 0 1rem 1rem; }
+
+.ai-guide.is-voice-mode .ai-guide__dialog {
+  width: 100%;
+  height: min(42rem, calc(100svh - 7rem));
+  border-radius: 24px;
+}
+
+.ai-guide.is-voice-mode .ai-guide__messages.ai-guide__subtitle {
+  min-height: 7rem;
+  max-height: 10rem;
+  padding: 0.85rem 1.35rem;
+}
+
+.ai-guide.is-voice-mode .ai-guide__orb-stage { min-height: 0; }
+
+@media (max-width: 580px) {
+  .ai-guide {
+    left: 0.65rem;
+    bottom: calc(4.45rem + env(safe-area-inset-bottom));
+    width: calc(100vw - 1.3rem);
+  }
+
+  .ai-guide__dialog,
+  .ai-guide.is-voice-mode .ai-guide__dialog { height: min(39rem, calc(100svh - 5.3rem)); border-radius: 20px; }
+  .ai-guide:not(.is-voice-mode) .ai-guide__messages.ai-guide__subtitle,
+  .ai-guide.is-voice-mode .ai-guide__messages.ai-guide__subtitle { padding-left: 1rem; padding-right: 1rem; }
+  .ai-guide__form { margin: 0 0.7rem 0.7rem; }
+}
+
+/* ChatGPT-inspired opening state: keep only the mic and voice controls. */
+.ai-guide__dialog { background: #000; }
+.ai-guide:not(.is-voice-mode) .ai-guide__messages.ai-guide__subtitle {
+  padding: 3.8rem 2rem 1.4rem;
+  place-items: center;
+}
+
+.ai-guide__messages[data-greeting="true"] { display: grid !important; place-items: center !important; }
+.ai-guide__messages[data-greeting="true"] .ai-message {
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+  font-weight: 500;
+  text-align: center;
+}
+
+.ai-guide__messages[data-greeting="true"] .ai-message p { margin: 0; }
+.ai-guide__form { background: #2c2c2e; }
+.ai-guide__voice-entry { background: #3478dc; }
+.ai-guide__form-mic { margin-right: 0.05rem; }
+
+/* Keep the greeting and question box together in the centre until the first message. */
+.ai-guide:not(.is-voice-mode):not(.has-conversation) .ai-guide__dialog {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ai-guide:not(.is-voice-mode):not(.has-conversation) .ai-guide__messages.ai-guide__subtitle {
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: none;
+  padding: 0 2rem 1.45rem;
+  overflow: visible;
+}
+
+.ai-guide:not(.is-voice-mode):not(.has-conversation) .ai-guide__form {
+  flex: 0 0 auto;
+  width: calc(100% - 2rem);
+  margin: 0 1rem;
+}
+
+.ai-guide:not(.is-voice-mode).has-conversation .ai-guide__dialog {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+@media (max-width: 580px) {
+  .ai-guide:not(.is-voice-mode) .ai-guide__messages.ai-guide__subtitle { padding: 3rem 1.2rem 1.2rem; }
+  .ai-guide:not(.is-voice-mode):not(.has-conversation) .ai-guide__messages.ai-guide__subtitle { padding: 0 1.2rem 1.15rem; }
+  .ai-guide:not(.is-voice-mode):not(.has-conversation) .ai-guide__form { width: calc(100% - 1.4rem); margin: 0 0.7rem; }
+}
+
+/* Voice chat is deliberately minimal: one opening line, the sphere, and two controls. */
+.ai-guide,
+.ai-guide.is-open {
+  position: fixed !important;
+  inset: auto !important;
+  left: clamp(0.8rem, 2vw, 1.6rem) !important;
+  bottom: clamp(5rem, 7vw, 5.8rem) !important;
+  display: block !important;
+  padding: 0 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.ai-guide__voice-greeting { display: none; }
+
+.ai-guide.is-voice-mode .ai-guide__dialog {
+  width: min(34rem, calc(100vw - 1.6rem));
+  height: min(34rem, calc(100svh - 7rem));
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  background: #171717;
+}
+
+.ai-guide.is-voice-mode .ai-guide__messages.ai-guide__subtitle {
+  display: none !important;
+}
+
+.ai-guide.is-voice-mode .ai-guide__orb-stage {
+  min-height: 0;
+  background: transparent;
+}
+
+/* The reference sphere has no decorative circumference or orbit ring. */
+.ai-guide.is-voice-mode .ai-guide__orb-stage::before {
+  display: none !important;
+}
+
+.ai-guide.is-voice-mode .ai-guide__orb {
+  width: min(62%, 390px);
+  max-height: min(52vh, 390px);
+  filter: none;
+}
+
+.ai-guide.is-voice-mode .ai-guide__voice-greeting {
+  display: block;
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 0.35rem 1.5rem 1rem;
+  color: #fff;
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.ai-guide.is-voice-mode .ai-guide__voice-controls {
+  gap: 2.25rem;
+  padding: 0.75rem 1.5rem 1.55rem;
+}
+
+@media (max-width: 580px) {
+  .ai-guide.is-voice-mode .ai-guide__dialog {
+    width: 100%;
+    height: min(34rem, calc(100svh - 5.3rem));
+  }
+  .ai-guide.is-voice-mode .ai-guide__orb { width: min(75%, 340px); }
+  .ai-guide.is-voice-mode .ai-guide__voice-greeting { padding: 0.25rem 1.2rem 0.9rem; font-size: 0.92rem; }
 }

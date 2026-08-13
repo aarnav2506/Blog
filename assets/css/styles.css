@@ -79,8 +79,12 @@ body.has-background-video {
   object-fit: cover;
   object-position: center;
   pointer-events: none;
-  filter: saturate(0.9) brightness(0.58) contrast(1.05);
-  transform: translateZ(0);
+  /* Avoid a costly full-screen CSS filter every frame. The existing overlay
+     provides the contrast needed for readable content instead. */
+  filter: none;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  contain: paint;
 }
 
 body.has-background-video::before {
@@ -90,17 +94,17 @@ body.has-background-video::before {
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(112deg, rgba(2, 5, 16, 0.7), rgba(5, 8, 20, 0.38) 52%, rgba(11, 5, 24, 0.58)),
+    linear-gradient(112deg, rgba(2, 5, 16, 0.8), rgba(5, 8, 20, 0.56) 52%, rgba(11, 5, 24, 0.7)),
     radial-gradient(circle at 18% 14%, rgba(66, 223, 255, 0.1), transparent 32%);
 }
 
 html[data-theme="light"] .site-background-video {
-  filter: saturate(0.72) brightness(1.14) contrast(0.82);
+  filter: none;
 }
 
 html[data-theme="light"] body.has-background-video::before {
   background:
-    linear-gradient(112deg, rgba(244, 249, 255, 0.68), rgba(236, 244, 255, 0.44) 52%, rgba(249, 246, 255, 0.64)),
+    linear-gradient(112deg, rgba(244, 249, 255, 0.8), rgba(236, 244, 255, 0.64) 52%, rgba(249, 246, 255, 0.78)),
     radial-gradient(circle at 18% 14%, rgba(77, 171, 216, 0.12), transparent 32%);
 }
 
