@@ -20,47 +20,34 @@
     panel.setAttribute("aria-label", "Ask Aarnav portfolio guide");
     panel.setAttribute("aria-hidden", "true");
     panel.innerHTML = `
-      <header class="ai-guide__header">
-        <div class="ai-guide__identity">
-          <strong>Aarnav Portfolio AI</strong>
-          <span>Answers only from approved site information</span>
-        </div>
-        <div class="ai-guide__actions">
-          <button class="ai-guide__icon is-active" type="button" data-ai-speech aria-label="Turn spoken replies off" title="Spoken replies">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h4l5 4V6l-5 4H5Z"></path><path d="M17 9a4 4 0 0 1 0 6"></path></svg>
-          </button>
-          <button class="ai-guide__icon" type="button" data-ai-close aria-label="Close portfolio guide">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
-          </button>
-        </div>
-      </header>
-      <div class="ai-guide__orb-stage">
-        <canvas class="ai-guide__orb" width="600" height="600" aria-hidden="true"></canvas>
-        <span class="ai-guide__orb-state">Ready</span>
-      </div>
-      <div class="ai-guide__messages ai-guide__subtitle" aria-live="polite">Hi, I am Aarnav's portfolio guide. Ask me about his books, coding, sports, guitar, places, or channels.</div>
-      <div class="ai-guide__voice-controls">
-        <button class="ai-guide__voice-control" type="button" data-ai-close aria-label="Close voice assistant">
+      <div class="ai-guide__dialog" role="dialog" aria-modal="true" aria-label="Ask Aarnav">
+        <button class="ai-guide__compact-close" type="button" data-ai-close aria-label="Close Ask Aarnav">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
         </button>
-        <button class="ai-guide__voice-control ai-guide__voice-control--mic" type="button" data-ai-mic aria-label="Start live voice conversation">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"></path></svg>
-        </button>
-      </div>
-      <div>
-        <div class="ai-guide__suggestions" aria-label="Suggested questions">
-          <button class="ai-suggestion" type="button">What books has Aarnav read?</button>
-          <button class="ai-suggestion" type="button">What are his coding interests?</button>
-          <button class="ai-suggestion" type="button">Which places has he visited?</button>
+        <div class="ai-guide__orb-stage">
+          <canvas class="ai-guide__orb" width="600" height="600" aria-hidden="true"></canvas>
+          <span class="ai-guide__orb-state">Ready</span>
         </div>
+        <p class="ai-guide__voice-greeting">Hi, I am Aarnav's portfolio guide. Ask me about his books, coding, sports, guitar, places, or channels.</p>
+        <div class="ai-guide__messages ai-guide__subtitle" aria-live="polite"></div>
         <form class="ai-guide__form">
-          <input class="ai-guide__input" type="text" maxlength="180" autocomplete="off" placeholder="Ask about Aarnav..." aria-label="Question for portfolio guide">
-          <button class="ai-guide__icon" type="button" data-ai-mic aria-label="Ask using voice" title="Ask using voice">
+          <input class="ai-guide__input" type="text" maxlength="180" autocomplete="off" placeholder="Ask anything" aria-label="Question for Ask Aarnav">
+          <button class="ai-guide__form-mic" type="button" data-ai-mic aria-label="Ask using voice" title="Ask using voice">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"></path></svg>
           </button>
-          <button class="ai-guide__submit" type="submit">Ask</button>
+          <button class="ai-guide__voice-entry" type="button" data-ai-open-voice aria-label="Open voice conversation" title="Open voice conversation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6M9 6v12M13 4v16M17 7v10M21 9v6"></path></svg>
+          </button>
           <p class="ai-guide__status">Typed questions stay local. Voice recognition is provided by your browser.</p>
         </form>
+        <div class="ai-guide__voice-controls">
+          <button class="ai-guide__voice-control" type="button" data-ai-close aria-label="Close voice assistant">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+          </button>
+          <button class="ai-guide__voice-control ai-guide__voice-control--mic" type="button" data-ai-mic aria-label="Start live voice conversation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"></path></svg>
+          </button>
+        </div>
       </div>
     `;
 
@@ -72,8 +59,8 @@
     const status = panel.querySelector(".ai-guide__status");
     const orb = panel.querySelector(".ai-guide__orb");
     const orbState = panel.querySelector(".ai-guide__orb-state");
-    const speechButton = panel.querySelector("[data-ai-speech]");
     const micButton = panel.querySelector(".ai-guide__voice-controls [data-ai-mic]");
+    const formMicButton = panel.querySelector(".ai-guide__form [data-ai-mic]");
     let speechEnabled = true;
     let recognition = null;
     let micPermissionLocked = false;
@@ -86,11 +73,27 @@
     let isListening = false;
     let liveSession = false;
     let startRecognition = null;
+    let startLiveVoiceConversation = null;
     let liveResumeTimer = null;
     let isResponding = false;
     let finalTranscript = "";
     let subtitleAnimationFrame = null;
     let responseLanguage = "en-US";
+    let hasConversation = false;
+
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      const greetings = hour < 12
+        ? ["Good morning. What would you like me to do?", "Ready when you are."]
+        : hour < 17
+          ? ["Greetings! What would you like me to do?", "Ready when you are."]
+          : hour < 21
+            ? ["Good evening. What would you like me to do?", "Greetings! What would you like to explore?"]
+            : ["Good evening. I am ready when you are.", "Ready when you are."];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    };
+
+    messages.textContent = "";
 
     const resumeLiveListening = () => {
       window.clearTimeout(liveResumeTimer);
@@ -324,12 +327,12 @@
       {
         title: "Books",
         keywords: ["book", "books", "read", "reading", "novel", "atomic", "habits", "treasure", "sherlock", "roald", "sudha"],
-        answer: () => `The portfolio currently features ${collectTitles(".book-card h3", fallbackBooks).join(", ")}. Open the Books page for his short notes on each one.`,
+        answer: () => `The portfolio currently features:\n- ${collectTitles(".book-card h3", fallbackBooks).join("\n- ")}\n\nOpen the Books page for Aarnav's short notes on each one.`,
       },
       {
         title: "Places",
         keywords: ["place", "places", "travel", "visited", "visit", "trip", "island", "temple", "beach", "kolkata", "chennai", "darjeeling"],
-        answer: () => `Aarnav's travel wall includes ${collectTitles(".place-card h3", fallbackPlaces).join(", ")}. Open the Places page to explore the complete photo collection.`,
+        answer: () => `Aarnav's travel wall includes:\n- ${collectTitles(".place-card h3", fallbackPlaces).join("\n- ")}\n\nOpen the Places page to explore the complete photo collection.`,
       },
       {
         title: "Online",
@@ -349,13 +352,15 @@
     ];
 
     const scoreKnowledge = (query) => {
-      const queryTokens = new Set(query.split(/\s+/).filter((token) => token.length > 2));
+      // Question words should not make a general question look like a portfolio topic.
+      const ignoredTokens = new Set(["how", "what", "when", "where", "why", "who", "are", "you", "the", "and", "for", "with", "from", "about", "can", "did", "does", "this", "that"]);
+      const queryTokens = new Set(query.split(/\s+/).filter((token) => token.length > 2 && !ignoredTokens.has(token)));
       return portfolioKnowledge
         .map((item) => {
           const score = item.keywords.reduce((total, keyword) => {
             const normalizedKeyword = normalizeText(keyword);
             if (query.includes(normalizedKeyword)) return total + normalizedKeyword.split(" ").length + 2;
-            return total + normalizedKeyword.split(" ").filter((token) => queryTokens.has(token)).length;
+            return total + normalizedKeyword.split(" ").filter((token) => !ignoredTokens.has(token) && queryTokens.has(token)).length;
           }, 0);
           return { ...item, score };
         })
@@ -451,25 +456,95 @@
       return "I can answer like a smart portfolio guide using only approved site information. Try asking a more specific question about Aarnav's books, coding, sports, guitar, places, age, AI tools, channels, or where to find a page or button.";
     };
 
-    const addMessage = (text, fromUser = false) => {
-      messages.classList.toggle("is-user-question", fromUser);
-      window.cancelAnimationFrame(subtitleAnimationFrame);
+    const addFormattedAnswer = (container, text) => {
+      const lines = text.replace(/\r/g, "").split("\n");
+      let list = null;
 
-      if (fromUser) {
-        messages.textContent = text;
+      const addParagraph = (value) => {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = value;
+        container.append(paragraph);
+      };
+
+      lines.forEach((rawLine) => {
+        const line = rawLine.trim();
+        const bullet = line.match(/^[-*]\s+(.+)/);
+        const numbered = line.match(/^\d+[.)]\s+(.+)/);
+
+        if (bullet || numbered) {
+          const ordered = Boolean(numbered);
+          if (!list || list.tagName !== (ordered ? "OL" : "UL")) {
+            list = document.createElement(ordered ? "ol" : "ul");
+            container.append(list);
+          }
+          const item = document.createElement("li");
+          item.textContent = (bullet || numbered)[1];
+          list.append(item);
+          return;
+        }
+
+        list = null;
+        if (!line) return;
+        if (/^#{1,3}\s+/.test(line)) {
+          const heading = document.createElement("strong");
+          heading.className = "ai-message__heading";
+          heading.textContent = line.replace(/^#{1,3}\s+/, "");
+          container.append(heading);
+          return;
+        }
+        addParagraph(line);
+      });
+
+      if (!container.childElementCount) addParagraph(text);
+    };
+
+    const addMessage = (text, fromUser = false, { animate = false } = {}) => {
+      messages.classList.remove("is-user-question");
+      window.cancelAnimationFrame(subtitleAnimationFrame);
+      if (fromUser && !hasConversation) {
+        messages.replaceChildren();
+        messages.dataset.greeting = "false";
+        hasConversation = true;
+        panel.classList.add("has-conversation");
+      }
+      const message = document.createElement("article");
+      message.className = `ai-message ${fromUser ? "ai-message--user" : "ai-message--assistant"}`;
+
+      if (fromUser) message.textContent = text;
+      messages.append(message);
+      messages.scrollTop = messages.scrollHeight;
+
+      if (fromUser || !animate) {
+        if (!fromUser) addFormattedAnswer(message, text);
         return;
       }
 
-      messages.textContent = "";
-      const duration = Math.min(Math.max(text.length * 18, 900), 10000);
+      const duration = Math.min(Math.max(text.length * 11, 520), 5200);
       const startedAt = performance.now();
       const typeReply = (now) => {
         const progress = Math.min((now - startedAt) / duration, 1);
-        const count = Math.floor(text.length * progress);
-        messages.textContent = text.slice(0, count);
-        if (progress < 1) subtitleAnimationFrame = window.requestAnimationFrame(typeReply);
+        message.textContent = text.slice(0, Math.floor(text.length * progress));
+        messages.scrollTop = messages.scrollHeight;
+        if (progress < 1) {
+          subtitleAnimationFrame = window.requestAnimationFrame(typeReply);
+          return;
+        }
+        message.textContent = "";
+        addFormattedAnswer(message, text);
+        messages.scrollTop = messages.scrollHeight;
       };
       subtitleAnimationFrame = window.requestAnimationFrame(typeReply);
+    };
+
+    addMessage(getGreeting());
+    messages.dataset.greeting = "true";
+
+    const resetTextChat = () => {
+      hasConversation = false;
+      panel.classList.remove("has-conversation");
+      messages.replaceChildren();
+      messages.dataset.greeting = "true";
+      addMessage(getGreeting());
     };
 
     const pickVoice = (preferredLanguage = "en-US") => {
@@ -613,10 +688,11 @@
       return data.reply;
     };
 
-    const ask = async (question) => {
+    const ask = async (question, { useVoice = false } = {}) => {
       const cleanQuestion = question.trim();
       if (!cleanQuestion) return;
-      addMessage(cleanQuestion, true);
+      const isVoiceMode = panel.classList.contains("is-voice-mode");
+      if (!isVoiceMode) addMessage(cleanQuestion, true);
       input.value = "";
       status.textContent = "Thinking...";
       setOrbState("thinking");
@@ -628,21 +704,24 @@
       if (localAnswer === localFallback) {
         try {
           answer = await askGeminiBackend(cleanQuestion);
-        } catch {
-          answer = localFallback;
+        } catch (error) {
+          answer = error.message || localFallback;
         }
       }
 
       answer = localizeAnswer(cleanQuestion, answer);
-      addMessage(answer);
-      speak(answer);
+      if (!isVoiceMode) addMessage(answer, false, { animate: true });
+      if (useVoice) speak(answer);
+      else setOrbState("ready");
       status.textContent = "Typed questions stay local. Voice recognition is provided by your browser.";
     };
 
     const setOpen = (open) => {
       panel.classList.toggle("is-open", open);
+      panel.classList.remove("is-voice-mode");
       panel.setAttribute("aria-hidden", String(!open));
       toggle.setAttribute("aria-expanded", String(open));
+      if (open) resetTextChat();
       if (!open && "speechSynthesis" in window) {
         liveSession = false;
         window.clearTimeout(liveResumeTimer);
@@ -651,13 +730,18 @@
       }
     };
 
+    const openVoiceMode = () => {
+      panel.classList.add("is-voice-mode");
+      setOrbState("ready");
+    };
+
     toggle.addEventListener("click", () => setOpen(!panel.classList.contains("is-open")));
-    panel.querySelector(".ai-guide__voice-controls [data-ai-close]").addEventListener("click", () => {
+    panel.querySelectorAll("[data-ai-close]").forEach((closeButton) => closeButton.addEventListener("click", () => {
       liveSession = false;
       window.clearTimeout(liveResumeTimer);
       recognition?.abort();
       setOpen(false);
-    });
+    }));
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       ask(input.value);
@@ -665,18 +749,9 @@
     panel.querySelectorAll(".ai-suggestion").forEach((button) => {
       button.addEventListener("click", () => ask(button.textContent));
     });
-
-    speechButton.addEventListener("click", () => {
-      speechEnabled = !speechEnabled;
-      speechButton.classList.toggle("is-active", speechEnabled);
-      speechButton.setAttribute("aria-label", speechEnabled ? "Turn spoken replies off" : "Turn spoken replies on");
-      status.textContent = speechEnabled ? "Spoken replies are on." : "Spoken replies are off.";
-      if (speechEnabled && "speechSynthesis" in window) {
-        speak("Spoken replies are on.");
-      }
-      if (!speechEnabled && "speechSynthesis" in window) {
-        stopSpeaking();
-      }
+    panel.querySelector("[data-ai-open-voice]").addEventListener("click", () => {
+      openVoiceMode();
+      startLiveVoiceConversation();
     });
 
     if ("speechSynthesis" in window) {
@@ -724,14 +799,20 @@
             }
             const visibleText = (finalTranscript || interim).trim();
             input.value = visibleText;
-            if (visibleText) addMessage(visibleText, true);
             if (finalTranscript.trim()) {
               const question = finalTranscript.trim();
               finalTranscript = "";
-              isResponding = true;
-              speechEnabled = true;
-              speechButton.classList.add("is-active");
-              ask(question);
+              if (panel.classList.contains("is-voice-mode")) {
+                isResponding = true;
+                speechEnabled = true;
+                ask(question, { useVoice: true });
+              } else {
+                // The regular chat microphone only transcribes into its input.
+                input.value = question;
+                liveSession = false;
+                recognition?.stop();
+                status.textContent = "Voice typed into the question box. Press Enter when you are ready.";
+              }
             }
           });
           recognition.addEventListener("end", () => {
@@ -760,7 +841,7 @@
           status.textContent = "Voice input is already starting. Please try again in a moment.";
         }
       };
-      micButton.addEventListener("click", () => {
+      startLiveVoiceConversation = () => {
         if (liveSession) {
           liveSession = false;
           window.clearTimeout(liveResumeTimer);
@@ -782,6 +863,18 @@
           liveSession = false;
           micButton.classList.remove("is-active");
           status.textContent = "Please allow microphone access to use voice questions.";
+        });
+      };
+      micButton.addEventListener("click", startLiveVoiceConversation);
+      formMicButton?.addEventListener("click", () => {
+        if (micPermissionLocked) {
+          status.textContent = "Microphone access was blocked by the browser. Refresh only if you want to change that choice.";
+          return;
+        }
+        liveSession = true;
+        requestMicAccess().then(startRecognition).catch(() => {
+          liveSession = false;
+          status.textContent = "Please allow microphone access to use voice typing.";
         });
       });
     } else {

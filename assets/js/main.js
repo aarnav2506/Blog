@@ -61,8 +61,14 @@ function initDesktopVideoBackground() {
   video.className = "site-background-video";
   video.src = "./assets/video/portfolio-background.mp4";
   video.muted = true;
+  video.defaultMuted = true;
+  video.autoplay = true;
   video.playsInline = true;
-  video.preload = "metadata";
+  // Native looping avoids the visible pause caused by seeking back to frame zero.
+  video.preload = "auto";
+  video.loop = true;
+  video.setAttribute("autoplay", "");
+  video.setAttribute("muted", "");
   video.setAttribute("aria-hidden", "true");
   video.setAttribute("disablepictureinpicture", "");
   video.setAttribute("tabindex", "-1");
@@ -75,16 +81,27 @@ function initDesktopVideoBackground() {
     video.play().catch(() => {});
   };
 
-  video.addEventListener("loadedmetadata", () => {
-    video.currentTime = 0;
+  // Starting after the browser has buffered the clip prevents a start-stop
+  // effect on connections or PCs that cannot decode the first frames instantly.
+  const startWhenBuffered = () => {
     if (document.visibilityState === "visible") playForward();
+  };
+  video.addEventListener("canplaythrough", startWhenBuffered, { once: true });
+  video.addEventListener("loadeddata", () => {
+    window.setTimeout(startWhenBuffered, 180);
   }, { once: true });
 
-  // Restart from the first frame after the forward playback reaches the end.
-  video.addEventListener("ended", () => {
-    video.currentTime = 0;
-    playForward();
+  // Recover only after more video data is available. This avoids a loop of
+  // repeated play calls while the browser is still buffering.
+  video.addEventListener("waiting", () => {
+    video.addEventListener("canplay", startWhenBuffered, { once: true });
   });
+  video.addEventListener("pause", () => {
+    if (document.visibilityState === "visible" && !video.ended && video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      startWhenBuffered();
+    }
+  });
+
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") {
       video.pause();
