@@ -59,9 +59,6 @@ function initDesktopVideoBackground() {
 
   const video = document.createElement("video");
   video.className = "site-background-video";
-  // A versioned URL prevents an older service worker or CDN copy from being
-  // reused after the background clip has been replaced.
-  video.src = "./assets/video/portfolio-background.mp4?v=20260813-3";
   video.muted = true;
   video.defaultMuted = true;
   video.autoplay = true;
@@ -78,21 +75,37 @@ function initDesktopVideoBackground() {
   document.documentElement.classList.add("has-background-video");
   document.body.classList.add("has-background-video");
 
-  const keepVideoPlaying = () => {
+  const sourceUrl = new URL("./assets/video/portfolio-background.mp4?v=20260813-4", window.location.href).href;
+  let sourceObjectUrl = null;
+
+  const startPlayback = () => {
     if (document.visibilityState !== "visible" || !video.paused) return;
     video.playbackRate = 1;
     video.play().catch(() => {});
   };
 
-  // The browser owns playback and looping after this one initial start.
-  // Avoid pausing/restarting during normal page activity, which can create stutter.
-  video.addEventListener("canplay", keepVideoPlaying, { once: true });
-  video.addEventListener("stalled", () => window.setTimeout(keepVideoPlaying, 180));
-  video.addEventListener("waiting", () => window.setTimeout(keepVideoPlaying, 180));
+  const loadVideo = (url) => {
+    video.src = url;
+    video.addEventListener("canplay", startPlayback, { once: true });
+    video.load();
+  };
 
-  // Some browsers can silently pause a muted, fixed background video. Check
-  // infrequently and resume only if it has actually stopped.
-  window.setInterval(keepVideoPlaying, 1400);
+  // The background clip is small enough to keep in memory. Loading it once as
+  // a Blob eliminates mid-video streaming stalls from CDN range responses.
+  fetch(sourceUrl, { cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error("Background video could not be loaded.");
+      return response.blob();
+    })
+    .then((blob) => {
+      sourceObjectUrl = URL.createObjectURL(blob);
+      loadVideo(sourceObjectUrl);
+    })
+    .catch(() => loadVideo(sourceUrl));
+
+  window.addEventListener("pagehide", () => {
+    if (sourceObjectUrl) URL.revokeObjectURL(sourceObjectUrl);
+  }, { once: true });
 }
 
 initDesktopVideoBackground();
@@ -590,7 +603,9 @@ if (revealItems.length) {
         }
       });
     },
-    { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+    // Reveal shortly after an element enters view, matching native scrolling
+    // without trying to control the visitor's wheel or touch distance.
+    { threshold: 0.08, rootMargin: "0px 0px -5% 0px" }
   );
 
   revealItems.forEach((item, index) => {

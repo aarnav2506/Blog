@@ -5,6 +5,7 @@
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const performanceMode = window.__aarnavPerformanceMode || document.documentElement.dataset.performance || "full";
   const isPhonePerformanceMode = performanceMode === "phone";
+  const hasDesktopVideoBackground = document.documentElement.classList.contains("has-background-video");
   window.__aarnavAudioEnergy = 0;
 
   function initPortfolioGuide() {
@@ -125,10 +126,10 @@
       let responseBlend = 0;
       // Phones draw a deliberately lighter orb. It stays detailed at the
       // larger mobile size without monopolising the browser's render thread.
-      const particleCount = isPhonePerformanceMode ? 420 : 1500;
+      const particleCount = isPhonePerformanceMode ? 420 : hasDesktopVideoBackground ? 760 : 1500;
       // Target a high-refresh mobile animation; the browser will naturally
       // cap rendering at the device display's supported refresh rate.
-      const phoneFrameInterval = isPhonePerformanceMode ? 1000 / 100 : 0;
+      const phoneFrameInterval = isPhonePerformanceMode ? 1000 / 100 : hasDesktopVideoBackground ? 1000 / 50 : 0;
       let lastPhoneFrame = 0;
       const particles = Array.from({ length: particleCount }, (_, index) => {
         const y = 1 - (index / (particleCount - 1)) * 2;
@@ -148,6 +149,13 @@
       const render = (time) => {
         if (document.visibilityState !== "visible") {
           window.setTimeout(() => window.requestAnimationFrame(render), 240);
+          return;
+        }
+        // The orb is invisible until Ask Aarnav opens. Keep only a low-cost
+        // heartbeat while it is hidden so the desktop background video gets
+        // priority for smooth, continuous playback.
+        if (!panel.classList.contains("is-open")) {
+          window.setTimeout(() => window.requestAnimationFrame(render), 420);
           return;
         }
         if (phoneFrameInterval && time - lastPhoneFrame < phoneFrameInterval) {
@@ -939,7 +947,10 @@
     let energy = 0;
     let bass = 0;
     let lastAudioFrame = 0;
-    const audioFrameInterval = isPhonePerformanceMode ? 1000 / 12 : 1000 / 60;
+    // The video already supplies continuous background motion on desktop, so
+    // music ambience can update smoothly at a lighter rate without competing
+    // with video decoding and compositing.
+    const audioFrameInterval = isPhonePerformanceMode ? 1000 / 12 : hasDesktopVideoBackground ? 1000 / 24 : 1000 / 60;
 
     const syncTrackProfile = () => {
       const trackIndex = window.__aarnavAudioTrack?.index ?? Number.parseInt(localStorage.getItem("aarnav-bgm-track") || "0", 10);
