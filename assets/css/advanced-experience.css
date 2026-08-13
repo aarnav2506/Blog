@@ -552,6 +552,15 @@ html.performance-phone .gpu-ambient {
   display: none;
 }
 
+/* When the desktop video is active it is the moving visual. Keep the music
+   reaction minimal so expensive filters do not compete with video playback. */
+html.has-background-video body.audio-reactive .texture-noise,
+html.has-background-video body.audio-reactive .aurora,
+html.has-background-video body.audio-reactive #guitar .channel-card,
+html.has-background-video body.audio-reactive #guitar .video-card {
+  filter: none;
+}
+
 html.performance-phone body::after {
   opacity: 0.55;
   filter: none;
