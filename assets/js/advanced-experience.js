@@ -432,8 +432,33 @@
       const navigationAnswer = getNavigationAnswer(query);
       const thoughtAnswer = thinkThroughQuestion(question, query);
 
+      // Keep everyday conversation useful even when the visitor is viewing the
+      // static GitHub Pages copy, where the private Vercel API is unavailable.
+      const arithmetic = query.match(/^(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)$/);
+      if (arithmetic) {
+        const left = Number(arithmetic[1]);
+        const right = Number(arithmetic[3]);
+        const operator = arithmetic[2];
+        if (operator === "+") return `${left} + ${right} = ${left + right}.`;
+        if (operator === "-") return `${left} - ${right} = ${left - right}.`;
+        if (operator === "*") return `${left} x ${right} = ${left * right}.`;
+        if (operator === "/") return right === 0 ? "Division by zero is undefined." : `${left} / ${right} = ${left / right}.`;
+      }
+
       if (/\b(hello|hi|hey|namaste)\b/.test(query)) {
         return "Hello. You can ask me about Aarnav's coding, sports, books, music, travels, AI tools, or online channels.";
+      }
+      if (/\b(how are you|are you fine|are you okay|how do you do)\b/.test(query)) {
+        return "I am doing well, thank you. What would you like to explore or ask about?";
+      }
+      if (/\b(who are you|your name|what are you)\b/.test(query)) {
+        return "I am Ask Aarnav, Aarnav Thakur's portfolio guide. I can help with normal questions as well as information and navigation for this website.";
+      }
+      if (/\b(thanks|thank you|thx)\b/.test(query)) {
+        return "You are welcome. What would you like to ask next?";
+      }
+      if (/\b(what can you do|help me|can you help)\b/.test(query)) {
+        return "I can answer everyday questions, help you explore Aarnav's portfolio, and guide you to the right pages, buttons, books, places, interests, and channels.";
       }
       if (/\b(how|what)\b.*\b(website|site|portfolio)\b.*\b(create|created|made|make|built|build|design|designed|develop|developed|code|coded)\b|\b(website|site|portfolio)\b.*\b(how|made|created|built)\b/.test(query)) {
         return resolveKnowledgeAnswer(portfolioKnowledge.find((item) => item.title === "Website creation"));
@@ -683,6 +708,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: question }),
       });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("The online AI service is unavailable here. You can still ask about Aarnav's portfolio.");
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Chatbot request failed.");
       return data.reply;
@@ -705,7 +734,9 @@
         try {
           answer = await askGeminiBackend(cleanQuestion);
         } catch (error) {
-          answer = error.message || localFallback;
+          // GitHub Pages returns an HTML page for /api/chat. Do not expose that
+          // technical response inside the assistant.
+          answer = localFallback;
         }
       }
 

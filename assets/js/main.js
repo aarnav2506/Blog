@@ -59,7 +59,9 @@ function initDesktopVideoBackground() {
 
   const video = document.createElement("video");
   video.className = "site-background-video";
-  video.src = "./assets/video/portfolio-background.mp4";
+  // A versioned URL prevents an older service worker or CDN copy from being
+  // reused after the background clip has been replaced.
+  video.src = "./assets/video/portfolio-background.mp4?v=20260813-3";
   video.muted = true;
   video.defaultMuted = true;
   video.autoplay = true;
@@ -76,40 +78,21 @@ function initDesktopVideoBackground() {
   document.documentElement.classList.add("has-background-video");
   document.body.classList.add("has-background-video");
 
-  const playForward = () => {
+  const keepVideoPlaying = () => {
+    if (document.visibilityState !== "visible" || !video.paused) return;
     video.playbackRate = 1;
     video.play().catch(() => {});
   };
 
-  // Starting after the browser has buffered the clip prevents a start-stop
-  // effect on connections or PCs that cannot decode the first frames instantly.
-  const startWhenBuffered = () => {
-    if (document.visibilityState === "visible") playForward();
-  };
-  video.addEventListener("canplaythrough", startWhenBuffered, { once: true });
-  video.addEventListener("loadeddata", () => {
-    window.setTimeout(startWhenBuffered, 180);
-  }, { once: true });
+  // The browser owns playback and looping after this one initial start.
+  // Avoid pausing/restarting during normal page activity, which can create stutter.
+  video.addEventListener("canplay", keepVideoPlaying, { once: true });
+  video.addEventListener("stalled", () => window.setTimeout(keepVideoPlaying, 180));
+  video.addEventListener("waiting", () => window.setTimeout(keepVideoPlaying, 180));
 
-  // Recover only after more video data is available. This avoids a loop of
-  // repeated play calls while the browser is still buffering.
-  video.addEventListener("waiting", () => {
-    video.addEventListener("canplay", startWhenBuffered, { once: true });
-  });
-  video.addEventListener("pause", () => {
-    if (document.visibilityState === "visible" && !video.ended && video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
-      startWhenBuffered();
-    }
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") {
-      video.pause();
-      return;
-    }
-
-    playForward();
-  });
+  // Some browsers can silently pause a muted, fixed background video. Check
+  // infrequently and resume only if it has actually stopped.
+  window.setInterval(keepVideoPlaying, 1400);
 }
 
 initDesktopVideoBackground();
