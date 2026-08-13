@@ -1108,6 +1108,8 @@ html.performance-phone .ai-guide-toggle {
 .ai-guide.is-open {
   position: fixed !important;
   inset: auto !important;
+  top: auto !important;
+  right: auto !important;
   left: clamp(0.8rem, 2vw, 1.6rem) !important;
   bottom: clamp(5rem, 7vw, 5.8rem) !important;
   display: block !important;
@@ -1120,8 +1122,9 @@ html.performance-phone .ai-guide-toggle {
 .ai-guide__voice-greeting { display: none; }
 
 .ai-guide.is-voice-mode .ai-guide__dialog {
-  width: min(34rem, calc(100vw - 1.6rem));
-  height: min(34rem, calc(100svh - 7rem));
+  /* Voice Chat shares the exact same left-bottom panel footprint as text chat. */
+  width: 100%;
+  height: min(42rem, calc(100svh - 7rem));
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;
   background: #171717;
@@ -1171,4 +1174,95 @@ html.performance-phone .ai-guide-toggle {
   }
   .ai-guide.is-voice-mode .ai-guide__orb { width: min(75%, 340px); }
   .ai-guide.is-voice-mode .ai-guide__voice-greeting { padding: 0.25rem 1.2rem 0.9rem; font-size: 0.92rem; }
+}
+
+/* Final placement lock: voice chat and text chat always open from the same
+   bottom-left anchor, regardless of earlier legacy voice-mode declarations. */
+.ai-guide.is-open.is-voice-mode {
+  position: fixed !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: clamp(5rem, 7vw, 5.8rem) !important;
+  left: clamp(0.8rem, 2vw, 1.6rem) !important;
+  width: min(34rem, calc(100vw - 1.6rem)) !important;
+  height: auto !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.ai-guide.is-open.is-voice-mode .ai-guide__dialog {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  height: min(42rem, calc(100svh - 7rem)) !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+@media (max-width: 580px) {
+  .ai-guide.is-open.is-voice-mode {
+    left: 0.65rem !important;
+    bottom: calc(4.45rem + env(safe-area-inset-bottom)) !important;
+    width: calc(100vw - 1.3rem) !important;
+  }
+
+  .ai-guide.is-open.is-voice-mode .ai-guide__dialog {
+    height: min(39rem, calc(100svh - 5.3rem)) !important;
+  }
+}
+
+/* Keep the message composer fully inside the rounded panel on every screen. */
+.ai-guide.is-open .ai-guide__dialog {
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.ai-guide.is-open:not(.is-voice-mode) .ai-guide__form {
+  width: auto;
+  min-height: 3.8rem;
+  margin: 0 1rem 1rem;
+  padding: 0.45rem 0.55rem 0.45rem 1rem;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ai-guide.is-open:not(.is-voice-mode) .ai-guide__input {
+  min-height: 2.9rem;
+  align-self: center;
+}
+
+@media (max-width: 580px) {
+  .ai-guide.is-open .ai-guide__dialog { border-radius: 22px; }
+  .ai-guide.is-open:not(.is-voice-mode) .ai-guide__form {
+    width: auto;
+    margin: 0 0.7rem calc(0.7rem + env(safe-area-inset-bottom));
+    border-radius: 999px;
+  }
+}
+
+/* Final composer lock: it stays visible above the panel edge on desktop and phone. */
+.ai-guide.is-open:not(.is-voice-mode) .ai-guide__form {
+  box-sizing: border-box !important;
+  width: calc(100% - 2rem) !important;
+  min-height: 3.8rem !important;
+  margin: 0 1rem 1rem !important;
+  padding: 0.45rem 0.55rem 0.45rem 1rem !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+}
+
+.ai-guide.is-open:not(.is-voice-mode) .ai-guide__input {
+  min-height: 2.9rem !important;
+  line-height: 1.25 !important;
+}
+
+@media (max-width: 580px) {
+  .ai-guide.is-open:not(.is-voice-mode) .ai-guide__form {
+    width: calc(100% - 1.4rem) !important;
+    margin: 0 0.7rem calc(0.7rem + env(safe-area-inset-bottom)) !important;
+    border-radius: 999px !important;
+  }
 }
