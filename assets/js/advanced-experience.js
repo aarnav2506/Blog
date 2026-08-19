@@ -467,6 +467,9 @@
       // static GitHub Pages copy, where the private Vercel API is unavailable.
 
       if (/\b(hello|hi|hey|namaste)\b/.test(query)) {
+        if (/\b(aarnav|arnav)\b/.test(query) && /\b(how|who|what|where|is|about)\b/.test(query)) {
+          return "Aarnav Thakur is a 17-year-old student and creator based in Kolkata, India. He is interested in coding, AI tools, sports, guitar, books, travel, and building digital experiences.";
+        }
         return "Hello. You can ask me about Aarnav's coding, sports, books, music, travels, AI tools, or online channels.";
       }
       if (/\b(bye|goodbye|see you|see ya|take care)\b/.test(query)) {
@@ -740,8 +743,32 @@
         throw new Error("The online AI service is unavailable here. You can still ask about Aarnav's portfolio.");
       }
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Chatbot request failed.");
+      if (!response.ok) {
+        const error = new Error(data.error || "Chatbot request failed.");
+        error.status = response.status;
+        throw error;
+      }
       return data.reply;
+    };
+
+    const dailyQuotaKey = "aarnav-gemini-daily-usage";
+    const dailyQuotaLimit = 20;
+    const getDailyQuota = () => {
+      const today = new Date().toISOString().slice(0, 10);
+      let saved = null;
+      try {
+        saved = JSON.parse(localStorage.getItem(dailyQuotaKey) || "null");
+      } catch {
+        localStorage.removeItem(dailyQuotaKey);
+      }
+      return saved?.date === today ? saved : { date: today, count: 0 };
+    };
+    const showQuotaNotice = () => {
+      const notice = document.createElement("div");
+      notice.className = "ai-quota-notice";
+      notice.innerHTML = "<strong>Daily AI limit reached</strong><p>Ask Aarnav's free AI usage is finished for today. It will be available again tomorrow.</p><button type=\"button\">Close</button>";
+      document.body.append(notice);
+      notice.querySelector("button").addEventListener("click", () => notice.remove());
     };
 
     const ask = async (question, { useVoice = false } = {}) => {
@@ -758,12 +785,26 @@
       let answer = localAnswer;
 
       if (localAnswer === localFallback) {
+        const quota = getDailyQuota();
+        if (quota.count >= dailyQuotaLimit) {
+          showQuotaNotice();
+          answer = "Today's free AI question limit has been reached. Please try again tomorrow.";
+          if (!isVoiceMode) addMessage(answer, false, { animate: true });
+          setOrbState("ready");
+          status.textContent = "Daily AI limit reached.";
+          return;
+        }
         try {
           answer = await askGeminiBackend(cleanQuestion);
+          quota.count += 1;
+          localStorage.setItem(dailyQuotaKey, JSON.stringify(quota));
         } catch (error) {
-          // Keep the assistant useful if the visitor is on GitHub Pages or the
-          // Vercel function is temporarily unavailable.
-          answer = "I can help with general questions and Aarnav's approved portfolio information. Please open the Vercel deployment for Gemini-powered answers beyond the built-in guide.";
+          if (error.status === 429) {
+            showQuotaNotice();
+            answer = "Today's free AI question limit has been reached. Please try again tomorrow.";
+          } else {
+            answer = "I can help with general questions and Aarnav's approved portfolio information. Please open the Vercel deployment for Gemini-powered answers beyond the built-in guide.";
+          }
         }
       }
 

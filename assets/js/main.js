@@ -1007,9 +1007,16 @@ if (audio && audioToggle) {
     }
   });
 
-  audio.pause();
-  localStorage.setItem(audioStateKey, "paused");
-  syncAudioButton(false);
+  // Preserve playback intent across full-page navigation. Autoplay may still
+  // be rejected by the browser, but permitted sessions resume automatically.
+  const shouldResumeOnLoad = localStorage.getItem(audioStateKey) === "playing";
+  if (shouldResumeOnLoad) {
+    const resumeAfterLoad = () => playBackgroundMusic();
+    if (audio.readyState >= 1) resumeAfterLoad();
+    else audio.addEventListener("loadedmetadata", resumeAfterLoad, { once: true });
+  } else {
+    syncAudioButton(false);
+  }
 
   pauseBackgroundMusicForVideo = () => {
     if (audio.paused) return;
