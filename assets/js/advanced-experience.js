@@ -456,6 +456,9 @@
       if (/\b(hello|hi|hey|namaste)\b/.test(query)) {
         return "Hello. You can ask me about Aarnav's coding, sports, books, music, travels, AI tools, or online channels.";
       }
+      if (/\b(bye|goodbye|see you|see ya|take care)\b/.test(query)) {
+        return "Goodbye. Thanks for visiting Aarnav's portfolio. Come back anytime.";
+      }
       if (/\b(how are you|are you fine|are you okay|how do you do)\b/.test(query)) {
         return "I am doing well, thank you. What would you like to explore or ask about?";
       }
@@ -464,6 +467,9 @@
       }
       if (/\b(thanks|thank you|thx)\b/.test(query)) {
         return "You are welcome. What would you like to ask next?";
+      }
+      if (/\b(good morning|good afternoon|good evening|good night)\b/.test(query)) {
+        return "Hello. I hope you are doing well. What would you like to explore?";
       }
       if (/\b(what can you do|help me|can you help)\b/.test(query)) {
         return "I can answer everyday questions, help you explore Aarnav's portfolio, and guide you to the right pages, buttons, books, places, interests, and channels.";
@@ -742,9 +748,9 @@
         try {
           answer = await askGeminiBackend(cleanQuestion);
         } catch (error) {
-          // GitHub Pages returns an HTML page for /api/chat. Do not expose that
-          // technical response inside the assistant.
-          answer = localFallback;
+          // Keep the assistant useful if the visitor is on GitHub Pages or the
+          // Vercel function is temporarily unavailable.
+          answer = "I can still help with everyday conversation and Aarnav's portfolio. For a broader question, please open the Vercel deployment so the Gemini assistant can respond.";
         }
       }
 
