@@ -6,6 +6,25 @@ const MAX_REQUESTS_PER_WINDOW = 8;
 const MAX_MESSAGE_LENGTH = 1000;
 const MAX_OUTPUT_TOKENS = 300;
 
+// This is the assistant's approved source of truth. Keeping it server-side
+// prevents visitors from changing the portfolio facts sent to Gemini.
+const PORTFOLIO_CONTEXT = `
+APPROVED AARNAV PORTFOLIO FACTS
+- Name: Aarnav Thakur.
+- Age shown by the portfolio: 17.
+- Based in: Kolkata, India.
+- Profile: student, coder, builder, athlete, guitarist, learner, and content creator.
+- Interests: coding, AI-assisted building, sports, guitar, books, travel, content creation, and learning.
+- Sports: football, basketball, and badminton; the portfolio highlights Badminton Nationals at U-15 level.
+- Website creation: Aarnav used HTML, CSS, and JavaScript with AI tools to build the structure, styling, animations, music controls, page navigation, and interactions. AI helped him iterate faster, debug, and reduce effort while he kept his own creative direction.
+- Guitar channel: Play With Aarnav.
+- Technology/content channel: Techno Savvy.
+- Books shown: Atomic Habits, Roald Dahl, Sudha Murty, Treasure Island, and Sherlock Holmes.
+- Places shown: Havelock Island, Neil Island, Rameshwar Temple, Darbhanga Maharaj Mahal, Darjeeling, Eco Park, Marina Beach, Belur Math, Dakshineswar Kali Temple, Victoria Memorial, Rabindra Sarobar, Writers' Building, Nicco Park, Birla Mandir, Birla Museum, Kapaleeshwarar Temple, Snow Kingdom, and Hanuman Tok.
+- Website pages: Home, Interests, Books, Places, and Find Me.
+- Navigation: theme switch is at the top-right; Music and Instagram controls are at the bottom-right; Ask Aarnav is at the bottom-left.
+`;
+
 function getClientId(request) {
   const forwarded = request.headers["x-forwarded-for"];
   return (forwarded ? forwarded.split(",")[0] : request.socket?.remoteAddress || "unknown").trim();
@@ -71,7 +90,13 @@ approved and provided on this website." Never invent personal facts or claim to 
 web. For hateful, abusive, or explicit requests, refuse politely and offer a respectful,
 educational alternative. Be concise, friendly, and helpful.
 Use short paragraphs. When giving several places, books, steps, or options, use Markdown
-bullet points beginning with "- ".`,
+bullet points beginning with "- ".
+
+Use the approved portfolio facts below whenever the user asks about Aarnav. Do not add,
+guess, or combine personal facts that are not listed. If the question asks for private
+personal information, use the required privacy response instead.
+
+${PORTFOLIO_CONTEXT}`,
             }],
           },
           contents: [{
