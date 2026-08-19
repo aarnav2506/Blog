@@ -41,6 +41,10 @@ export default async function handler(request, response) {
     return response.status(429).json({ error: "Please wait a few minutes before asking more AI questions." });
   }
 
+  if (!process.env.GEMINI_API_KEY) {
+    return response.status(503).json({ error: "GEMINI_API_KEY is missing in the Vercel Production environment." });
+  }
+
   try {
     const geminiResponse = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
@@ -53,7 +57,10 @@ export default async function handler(request, response) {
         body: JSON.stringify({
           system_instruction: {
             parts: [{
-              text: `You are Ask Aarnav AI, the assistant for Aarnav Thakur's portfolio.
+      text: `You are Ask Aarnav AI, a friendly general-purpose assistant and the guide for Aarnav Thakur's portfolio.
+Answer normal conversation naturally: greetings, goodbyes, thanks, how-are-you questions,
+basic arithmetic, simple explanations, and everyday safe questions. Never respond with a
+refusal just because a question is not about the portfolio.
 Answer questions about Aarnav's website, coding, books, places, sports, guitar, music,
 channels, and navigation. You can also answer ordinary safe general questions, such as
 greetings, learning, coding, productivity, and simple explanations. Use approved portfolio
