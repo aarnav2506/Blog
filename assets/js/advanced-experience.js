@@ -436,13 +436,19 @@
     };
 
     const answerQuestion = (question) => {
-      const query = normalizeText(question);
-      const navigationAnswer = getNavigationAnswer(query);
-      const thoughtAnswer = thinkThroughQuestion(question, query);
+      const personalRequest = /\b(aarnav|arnav|he|him|his|you)\b/.test(question.toLowerCase())
+        && /\b(address|home address|phone|telephone|mobile number|email|password|private|personal|family|parents|school address|exact location|relationship|girlfriend|boyfriend|financial|bank|medical|health record|identity document)\b/.test(question.toLowerCase());
+      if (personalRequest) {
+        return "I can't answer private personal details. I can only analyze information that Aarnav has approved and provided on this website.";
+      }
 
-      // Keep everyday conversation useful even when the visitor is viewing the
-      // static GitHub Pages copy, where the private Vercel API is unavailable.
-      const arithmetic = query.match(/^(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)$/);
+      const sensitiveRequest = /\b(hate|hateful|racist|racial slur|kill|murder|bomb|weapon|porn|sexual|explicit|abuse|harass)\b/.test(question.toLowerCase());
+      if (sensitiveRequest) {
+        return "I can't help create hateful, abusive, or explicit content. I can discuss the topic in a respectful, educational, and safe way.";
+      }
+
+      // Check arithmetic before punctuation is removed from the natural-language query.
+      const arithmetic = question.trim().match(/^(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)[?!.,]*$/);
       if (arithmetic) {
         const left = Number(arithmetic[1]);
         const right = Number(arithmetic[3]);
@@ -452,6 +458,13 @@
         if (operator === "*") return `${left} x ${right} = ${left * right}.`;
         if (operator === "/") return right === 0 ? "Division by zero is undefined." : `${left} / ${right} = ${left / right}.`;
       }
+
+      const query = normalizeText(question);
+      const navigationAnswer = getNavigationAnswer(query);
+      const thoughtAnswer = thinkThroughQuestion(question, query);
+
+      // Keep everyday conversation useful even when the visitor is viewing the
+      // static GitHub Pages copy, where the private Vercel API is unavailable.
 
       if (/\b(hello|hi|hey|namaste)\b/.test(query)) {
         return "Hello. You can ask me about Aarnav's coding, sports, books, music, travels, AI tools, or online channels.";
@@ -492,7 +505,7 @@
       if (thoughtAnswer) {
         return thoughtAnswer;
       }
-      return "I can answer like a smart portfolio guide using only approved site information. Try asking a more specific question about Aarnav's books, coding, sports, guitar, places, age, AI tools, channels, or where to find a page or button.";
+      return "I am ready to help with general questions, explanations, ideas, and Aarnav's approved portfolio information.";
     };
 
     const addFormattedAnswer = (container, text) => {
@@ -741,7 +754,7 @@
       setOrbState("thinking");
       responseLanguage = detectResponseLanguage(cleanQuestion);
       const localAnswer = answerQuestion(cleanQuestion);
-      const localFallback = "I can answer like a smart portfolio guide using only approved site information. Try asking a more specific question about Aarnav's books, coding, sports, guitar, places, age, AI tools, channels, or where to find a page or button.";
+      const localFallback = "I am ready to help with general questions, explanations, ideas, and Aarnav's approved portfolio information.";
       let answer = localAnswer;
 
       if (localAnswer === localFallback) {
@@ -750,7 +763,7 @@
         } catch (error) {
           // Keep the assistant useful if the visitor is on GitHub Pages or the
           // Vercel function is temporarily unavailable.
-          answer = "I can still help with everyday conversation and Aarnav's portfolio. For a broader question, please open the Vercel deployment so the Gemini assistant can respond.";
+          answer = "I can help with general questions and Aarnav's approved portfolio information. Please open the Vercel deployment for Gemini-powered answers beyond the built-in guide.";
         }
       }
 
