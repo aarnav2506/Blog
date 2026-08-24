@@ -881,7 +881,7 @@ html.performance-phone .ai-guide-toggle {
 .ai-guide__form {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 0.35rem;
   margin: 0 clamp(0.8rem, 2vw, 1.2rem) clamp(1rem, 2vw, 1.25rem);
   padding: 0.34rem 0.38rem 0.34rem 1rem;
@@ -889,6 +889,20 @@ html.performance-phone .ai-guide-toggle {
   border-radius: 999px;
   background: #2b2b2e;
 }
+
+.ai-guide__plus {
+  display: grid;
+  width: 2.65rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, .75);
+  font-size: 1.55rem;
+  cursor: pointer;
+}
+.ai-guide__plus:hover { background: rgba(255, 255, 255, .08); color: #fff; }
 
 .ai-guide__input {
   min-height: 3rem;
@@ -915,11 +929,32 @@ html.performance-phone .ai-guide-toggle {
 
 .ai-guide__form-mic { background: transparent; color: rgba(255, 255, 255, 0.82); }
 .ai-guide__form-mic:hover { background: rgba(255, 255, 255, 0.08); }
-.ai-guide__voice-entry { background: #3172da; color: #fff; box-shadow: 0 5px 16px rgba(49, 114, 218, 0.34); }
+.ai-guide__form-mic.is-active {
+  background: #242426;
+  color: #fff;
+  animation: mic-listening-pulse 1.2s ease-in-out infinite;
+}
+.ai-guide__form-mic.is-active svg { animation: mic-listening-bars .8s ease-in-out infinite alternate; }
+.ai-guide__voice-entry { background: #3172da; color: #fff; box-shadow: 0 5px 16px rgba(49, 114, 218, 0.34); transition: background 160ms ease, transform 160ms ease; }
 .ai-guide__voice-entry:hover { background: #4683e6; transform: scale(1.04); }
+.ai-guide__voice-entry.is-thinking { background: #3172da; }
+.ai-guide__stop-icon { width: .72rem; height: .72rem; border-radius: .12rem; background: #fff; }
 .ai-guide__form-mic svg,
 .ai-guide__voice-entry svg { width: 1.2rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .ai-guide__status { display: none; }
+
+@keyframes mic-listening-pulse {
+  50% { box-shadow: 0 0 0 5px rgba(123, 232, 255, .1); }
+}
+@keyframes mic-listening-bars {
+  from { transform: scaleY(.7); }
+  to { transform: scaleY(1.18); }
+}
+
+@media (max-width: 580px) {
+  .ai-guide__form { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  .ai-guide__plus, .ai-guide__form-mic, .ai-guide__voice-entry { width: 2.45rem; }
+}
 
 .ai-guide.is-voice-mode .ai-guide__dialog {
   width: min(46rem, 100%);
