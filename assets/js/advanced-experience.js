@@ -591,6 +591,16 @@
       subtitleAnimationFrame = window.requestAnimationFrame(typeReply);
     };
 
+    const addThinkingMessage = () => {
+      const message = document.createElement("article");
+      message.className = "ai-message ai-message--assistant ai-message--thinking";
+      message.setAttribute("role", "status");
+      message.innerHTML = "<span>Thinking</span><i></i><i></i><i></i>";
+      messages.append(message);
+      messages.scrollTop = messages.scrollHeight;
+      return message;
+    };
+
     addMessage(getGreeting());
     messages.dataset.greeting = "true";
 
@@ -785,8 +795,10 @@
       let answer = localAnswer;
 
       if (localAnswer === localFallback) {
+        const thinkingMessage = addThinkingMessage();
         const quota = getDailyQuota();
         if (quota.count >= dailyQuotaLimit) {
+          thinkingMessage.remove();
           showQuotaNotice();
           answer = "Today's free AI question limit has been reached. Please try again tomorrow.";
           if (!isVoiceMode) addMessage(answer, false, { animate: true });
@@ -806,6 +818,7 @@
             answer = "I can help with general questions and Aarnav's approved portfolio information. Please open the Vercel deployment for Gemini-powered answers beyond the built-in guide.";
           }
         }
+        thinkingMessage.remove();
       }
 
       answer = localizeAnswer(cleanQuestion, answer);
