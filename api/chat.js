@@ -113,8 +113,13 @@ ${PORTFOLIO_CONTEXT}`,
 
     const data = await geminiResponse.json();
     if (!geminiResponse.ok) {
+      console.error("Gemini request failed", {
+        status: geminiResponse.status,
+        message: data?.error?.message || "Unknown Gemini error",
+        reason: data?.error?.status || "Unknown status",
+      });
       if (geminiResponse.status === 400 || geminiResponse.status === 401 || geminiResponse.status === 403) {
-        return response.status(502).json({ error: "Ask Aarnav cannot reach Gemini. Check the GEMINI_API_KEY in Vercel." });
+        return response.status(502).json({ error: "Gemini rejected the request. Check the Vercel function logs for the exact reason." });
       }
       if (geminiResponse.status === 429) {
         return response.status(429).json({ error: "The AI request limit has been reached. Please try again later." });
