@@ -33,10 +33,11 @@
         <div class="ai-guide__messages ai-guide__subtitle" aria-live="polite"></div>
         <form class="ai-guide__form">
           <input class="ai-guide__input" type="text" maxlength="180" autocomplete="off" placeholder="Ask anything" aria-label="Question for Ask Aarnav">
+          <button class="ai-guide__plus" type="button" aria-label="More options" title="More options">+</button>
           <button class="ai-guide__form-mic" type="button" data-ai-mic aria-label="Ask using voice" title="Ask using voice">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"></path></svg>
           </button>
-          <button class="ai-guide__voice-entry" type="button" data-ai-open-voice aria-label="Open voice conversation" title="Open voice conversation">
+          <button class="ai-guide__voice-entry" type="submit" aria-label="Send message" title="Send message">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6M9 6v12M13 4v16M17 7v10M21 9v6"></path></svg>
           </button>
           <p class="ai-guide__status">Typed questions stay local. Voice recognition is provided by your browser.</p>
@@ -81,6 +82,7 @@
     let subtitleAnimationFrame = null;
     let responseLanguage = "en-US";
     let hasConversation = false;
+    let activeRequestController = null;
 
     const getGreeting = () => {
       const hour = new Date().getHours();
@@ -574,7 +576,9 @@
         return;
       }
 
-      const duration = Math.min(Math.max(text.length * 11, 520), 5200);
+      // Keep the response readable without adding several seconds after the
+      // network request has already completed.
+      const duration = Math.min(Math.max(text.length * 5, 260), 2400);
       const startedAt = performance.now();
       const typeReply = (now) => {
         const progress = Math.min((now - startedAt) / duration, 1);
@@ -743,10 +747,12 @@
     };
 
     const askGeminiBackend = async (question) => {
+      activeRequestController = new AbortController();
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: question }),
+        signal: activeRequestController.signal,
       });
       const contentType = response.headers.get("content-type") || "";
       if (!contentType.includes("application/json")) {
@@ -759,6 +765,17 @@
         throw error;
       }
       return data.reply;
+    };
+
+    const setSubmitState = (isThinking) => {
+      const submit = form.querySelector(".ai-guide__voice-entry");
+      submit?.classList.toggle("is-thinking", isThinking);
+      submit?.setAttribute("aria-label", isThinking ? "Stop response" : "Send message");
+      submit?.setAttribute("title", isThinking ? "Stop response" : "Send message");
+      if (submit) submit.innerHTML = isThinking
+        ? '<span class="ai-guide__stop-icon" aria-hidden="true"></span>'
+        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"></path></svg>';
+      if (submit) submit.dataset.stopResponse = String(isThinking);
     };
 
     const dailyQuotaKey = "aarnav-gemini-daily-usage";
@@ -793,6 +810,7 @@
       const localAnswer = answerQuestion(cleanQuestion);
       const localFallback = "I am ready to help with general questions, explanations, ideas, and Aarnav's approved portfolio information.";
       let answer = localAnswer;
+      setSubmitState(true);
 
       if (localAnswer === localFallback) {
         const thinkingMessage = addThinkingMessage();
@@ -811,6 +829,13 @@
           quota.count += 1;
           localStorage.setItem(dailyQuotaKey, JSON.stringify(quota));
         } catch (error) {
+          if (error.name === "AbortError") {
+            thinkingMessage.remove();
+            setSubmitState(false);
+            setOrbState("ready");
+            status.textContent = "Response stopped.";
+            return;
+          }
           if (error.status === 429) {
             showQuotaNotice();
             answer = "Today's free AI question limit has been reached. Please try again tomorrow.";
@@ -826,6 +851,8 @@
       if (useVoice) speak(answer);
       else setOrbState("ready");
       status.textContent = "Typed questions stay local. Voice recognition is provided by your browser.";
+      activeRequestController = null;
+      setSubmitState(false);
     };
 
     const setOpen = (open) => {
@@ -861,9 +888,12 @@
     panel.querySelectorAll(".ai-suggestion").forEach((button) => {
       button.addEventListener("click", () => ask(button.textContent));
     });
-    panel.querySelector("[data-ai-open-voice]").addEventListener("click", () => {
-      openVoiceMode();
-      startLiveVoiceConversation();
+    panel.querySelector(".ai-guide__voice-entry").addEventListener("click", (event) => {
+      if (event.currentTarget.dataset.stopResponse === "true") {
+        event.preventDefault();
+        activeRequestController?.abort();
+        return;
+      }
     });
 
     if ("speechSynthesis" in window) {
@@ -898,6 +928,7 @@
           recognition.addEventListener("start", () => {
             isListening = true;
             micButton.classList.add("is-active");
+            formMicButton?.classList.add("is-active");
             if (!isResponding) setOrbState("listening");
             status.textContent = "Live voice mode is listening.";
           });
@@ -930,12 +961,14 @@
           recognition.addEventListener("end", () => {
             isListening = false;
             micButton.classList.remove("is-active");
+            formMicButton?.classList.remove("is-active");
             if (!isResponding) setOrbState("ready");
             if (!isResponding) resumeLiveListening();
           });
           recognition.addEventListener("error", (event) => {
             isListening = false;
             micButton.classList.remove("is-active");
+            formMicButton?.classList.remove("is-active");
             if (!isResponding) setOrbState("ready");
             if (event.error === "not-allowed" || event.error === "service-not-allowed") {
               micPermissionLocked = true;
@@ -949,6 +982,7 @@
         } catch {
           isListening = false;
           micButton.classList.remove("is-active");
+          formMicButton?.classList.remove("is-active");
           setOrbState("ready");
           status.textContent = "Voice input is already starting. Please try again in a moment.";
         }
@@ -960,6 +994,7 @@
           recognition?.abort();
           stopSpeaking();
           micButton.classList.remove("is-active");
+          formMicButton?.classList.remove("is-active");
           micButton.setAttribute("aria-label", "Start live voice conversation");
           status.textContent = "Live voice mode stopped.";
           return;
@@ -970,12 +1005,12 @@
         }
         liveSession = true;
         micButton.classList.add("is-active");
+        formMicButton?.classList.add("is-active");
         micButton.setAttribute("aria-label", "Stop live voice conversation");
-        requestMicAccess().then(startRecognition).catch(() => {
-          liveSession = false;
-          micButton.classList.remove("is-active");
-          status.textContent = "Please allow microphone access to use voice questions.";
-        });
+        // Start directly from the tap. Android Chrome handles the permission
+        // prompt for SpeechRecognition more reliably than a second getUserMedia
+        // request made immediately before it.
+        startRecognition();
       };
       micButton.addEventListener("click", startLiveVoiceConversation);
       formMicButton?.addEventListener("click", () => {
@@ -984,10 +1019,7 @@
           return;
         }
         liveSession = true;
-        requestMicAccess().then(startRecognition).catch(() => {
-          liveSession = false;
-          status.textContent = "Please allow microphone access to use voice typing.";
-        });
+        startRecognition();
       });
     } else {
       micButton.disabled = true;
