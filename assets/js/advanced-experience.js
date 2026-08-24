@@ -32,14 +32,29 @@
         <p class="ai-guide__voice-greeting">Hi, I am Aarnav's portfolio guide. Ask me about his books, coding, sports, guitar, places, or channels.</p>
         <div class="ai-guide__messages ai-guide__subtitle" aria-live="polite"></div>
         <form class="ai-guide__form">
-          <input class="ai-guide__input" type="text" maxlength="180" autocomplete="off" placeholder="Ask anything" aria-label="Question for Ask Aarnav">
           <button class="ai-guide__plus" type="button" aria-label="More options" title="More options">+</button>
+          <input class="ai-guide__input" type="text" maxlength="180" autocomplete="off" placeholder="Ask anything" aria-label="Question for Ask Aarnav">
           <button class="ai-guide__form-mic" type="button" data-ai-mic aria-label="Ask using voice" title="Ask using voice">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"></path></svg>
           </button>
           <button class="ai-guide__voice-entry" type="submit" aria-label="Send message" title="Send message">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6M9 6v12M13 4v16M17 7v10M21 9v6"></path></svg>
           </button>
+          <div class="ai-guide__dictation" aria-hidden="true">
+            <span class="ai-guide__dictation-plus" aria-hidden="true">+</span>
+            <span class="ai-guide__waveform" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <button type="button" data-ai-dictation-cancel aria-label="Cancel dictation">×</button>
+            <button type="button" data-ai-dictation-confirm aria-label="Send dictated message"><span aria-hidden="true">✓</span></button>
+          </div>
+          <div class="ai-guide__model-picker" aria-label="Model selection">
+            <span>Model</span>
+            <button type="button" data-ai-model="xmanius-1" aria-pressed="true">
+              <strong>Xmanius 1</strong><b aria-hidden="true">✓</b>
+            </button>
+            <button type="button" class="ai-guide__voice-picker" data-ai-open-voice>
+              <strong>Voice chat</strong><span aria-hidden="true">↗</span>
+            </button>
+          </div>
           <p class="ai-guide__status">Typed questions stay local. Voice recognition is provided by your browser.</p>
         </form>
         <div class="ai-guide__voice-controls">
@@ -63,6 +78,10 @@
     const orbState = panel.querySelector(".ai-guide__orb-state");
     const micButton = panel.querySelector(".ai-guide__voice-controls [data-ai-mic]");
     const formMicButton = panel.querySelector(".ai-guide__form [data-ai-mic]");
+    const dictationCancel = panel.querySelector("[data-ai-dictation-cancel]");
+    const dictationConfirm = panel.querySelector("[data-ai-dictation-confirm]");
+    const plusButton = panel.querySelector(".ai-guide__plus");
+    const modelPicker = panel.querySelector(".ai-guide__model-picker");
     let speechEnabled = true;
     let recognition = null;
     let micPermissionLocked = false;
@@ -83,6 +102,16 @@
     let responseLanguage = "en-US";
     let hasConversation = false;
     let activeRequestController = null;
+    let dictationMode = false;
+    let activeModelLabel = localStorage.getItem("aarnav-ai-model-label") || "Xmanius 1";
+
+    const setModelPicker = (open) => {
+      modelPicker.classList.toggle("is-open", open);
+      form.classList.toggle("has-model-picker", open);
+      plusButton.setAttribute("aria-expanded", String(open));
+    };
+
+    modelPicker.querySelector("strong").textContent = activeModelLabel;
 
     const getGreeting = () => {
       const hour = new Date().getHours();
@@ -748,23 +777,39 @@
 
     const askGeminiBackend = async (question) => {
       activeRequestController = new AbortController();
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question }),
-        signal: activeRequestController.signal,
-      });
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) {
-        throw new Error("The online AI service is unavailable here. You can still ask about Aarnav's portfolio.");
-      }
-      const data = await response.json();
-      if (!response.ok) {
-        const error = new Error(data.error || "Chatbot request failed.");
-        error.status = response.status;
+      let timedOut = false;
+      const timeout = window.setTimeout(() => {
+        timedOut = true;
+        activeRequestController.abort();
+      }, 15000);
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: question }),
+          signal: activeRequestController.signal,
+        });
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          throw new Error("The online AI service returned an invalid response.");
+        }
+        const data = await response.json();
+        if (!response.ok) {
+          const error = new Error(data.error || "Chatbot request failed.");
+          error.status = response.status;
+          throw error;
+        }
+        return data.reply;
+      } catch (error) {
+        if (timedOut) {
+          const timeoutError = new Error("Gemini took too long to respond.");
+          timeoutError.status = 504;
+          throw timeoutError;
+        }
         throw error;
+      } finally {
+        window.clearTimeout(timeout);
       }
-      return data.reply;
     };
 
     const setSubmitState = (isThinking) => {
@@ -822,6 +867,7 @@
           if (!isVoiceMode) addMessage(answer, false, { animate: true });
           setOrbState("ready");
           status.textContent = "Daily AI limit reached.";
+          setSubmitState(false);
           return;
         }
         try {
@@ -839,6 +885,8 @@
           if (error.status === 429) {
             showQuotaNotice();
             answer = "Today's free AI question limit has been reached. Please try again tomorrow.";
+          } else if (error.status === 504) {
+            answer = "Gemini is taking too long to respond. Please try the question again.";
           } else {
             answer = "I can help with general questions and Aarnav's approved portfolio information. Please open the Vercel deployment for Gemini-powered answers beyond the built-in guide.";
           }
@@ -883,7 +931,24 @@
     }));
     form.addEventListener("submit", (event) => {
       event.preventDefault();
+      setModelPicker(false);
       ask(input.value);
+    });
+    plusButton.addEventListener("click", () => setModelPicker(!modelPicker.classList.contains("is-open")));
+    modelPicker.addEventListener("click", (event) => {
+      const model = event.target.closest("[data-ai-model]");
+      if (!model) return;
+      activeModelLabel = "Xmanius 1";
+      localStorage.setItem("aarnav-ai-model-label", activeModelLabel);
+      modelPicker.querySelector("strong").textContent = activeModelLabel;
+      status.textContent = `${activeModelLabel} is selected.`;
+      setModelPicker(false);
+      input.focus();
+    });
+    modelPicker.querySelector("[data-ai-open-voice]").addEventListener("click", () => {
+      setModelPicker(false);
+      openVoiceMode();
+      startLiveVoiceConversation?.();
     });
     panel.querySelectorAll(".ai-suggestion").forEach((button) => {
       button.addEventListener("click", () => ask(button.textContent));
@@ -929,6 +994,7 @@
             isListening = true;
             micButton.classList.add("is-active");
             formMicButton?.classList.add("is-active");
+            form.classList.add("is-listening");
             if (!isResponding) setOrbState("listening");
             status.textContent = "Live voice mode is listening.";
           });
@@ -949,6 +1015,9 @@
                 isResponding = true;
                 speechEnabled = true;
                 ask(question, { useVoice: true });
+              } else if (dictationMode) {
+                input.value = question;
+                status.textContent = "Listening. Tap the check button to send.";
               } else {
                 // The regular chat microphone only transcribes into its input.
                 input.value = question;
@@ -962,6 +1031,7 @@
             isListening = false;
             micButton.classList.remove("is-active");
             formMicButton?.classList.remove("is-active");
+            form.classList.remove("is-listening");
             if (!isResponding) setOrbState("ready");
             if (!isResponding) resumeLiveListening();
           });
@@ -969,6 +1039,7 @@
             isListening = false;
             micButton.classList.remove("is-active");
             formMicButton?.classList.remove("is-active");
+            form.classList.remove("is-listening");
             if (!isResponding) setOrbState("ready");
             if (event.error === "not-allowed" || event.error === "service-not-allowed") {
               micPermissionLocked = true;
@@ -983,6 +1054,7 @@
           isListening = false;
           micButton.classList.remove("is-active");
           formMicButton?.classList.remove("is-active");
+          form.classList.remove("is-listening");
           setOrbState("ready");
           status.textContent = "Voice input is already starting. Please try again in a moment.";
         }
@@ -995,6 +1067,7 @@
           stopSpeaking();
           micButton.classList.remove("is-active");
           formMicButton?.classList.remove("is-active");
+          form.classList.remove("is-listening");
           micButton.setAttribute("aria-label", "Start live voice conversation");
           status.textContent = "Live voice mode stopped.";
           return;
@@ -1018,8 +1091,26 @@
           status.textContent = "Microphone access was blocked by the browser. Refresh only if you want to change that choice.";
           return;
         }
+        dictationMode = true;
         liveSession = true;
         startRecognition();
+      });
+      dictationCancel?.addEventListener("click", () => {
+        dictationMode = false;
+        liveSession = false;
+        finalTranscript = "";
+        input.value = "";
+        recognition?.abort();
+        form.classList.remove("is-listening");
+        status.textContent = "Dictation cancelled.";
+      });
+      dictationConfirm?.addEventListener("click", () => {
+        const dictatedQuestion = input.value.trim();
+        dictationMode = false;
+        liveSession = false;
+        recognition?.stop();
+        form.classList.remove("is-listening");
+        if (dictatedQuestion) ask(dictatedQuestion);
       });
     } else {
       micButton.disabled = true;
