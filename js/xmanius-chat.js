@@ -218,7 +218,7 @@
     tick();
     window.setTimeout(finish, duration + 1000);
   };
-  const addMessage = (text, type, { animate = false, persist = true, sources = [], searchError = "", attachmentNames = [], reasoningSummary = "", reasoningSeconds = 0 } = {}) => {
+  const addMessage = (text, type, { animate = false, persist = true, sources = [], searchError = "", attachmentNames = [], reasoningSummary = "", reasoningSeconds = 0, thinkMode = false } = {}) => {
     text = normalizeResponseText(text);
     empty.hidden = true;
     const displaySources = [...new Map([...sources, ...youtubeSourcesFromText(text)].filter((source) => source?.url).map((source) => [source.url, source])).values()];
@@ -239,7 +239,7 @@
       attachmentNames.forEach((name) => { const chip = document.createElement("span"); chip.className = "message-attachment"; chip.textContent = `📎 ${name}`; attached.append(chip); });
       item.append(attached);
     }
-    if (type === "assistant" && (reasoningSummary || reasoningSeconds)) {
+    if (type === "assistant" && (thinkMode || reasoningSummary || reasoningSeconds)) {
       const summary = document.createElement("details");
       summary.className = "thinking-summary";
       const summaryLabel = document.createElement("summary");
@@ -344,11 +344,11 @@
       const response = await fetch("/api/xmanius-chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: requestMessage, model: selectedModel, thinkMode, webSearch, history, rethink, attachments: requestAttachments.map(attachmentToRequest) }), signal: activeRequestController.signal });
       const data = await response.json().catch(() => ({}));
       thinking.remove();
-      addMessage(response.ok ? data.reply : (data.userMessage || data.error || `The AI request failed (${response.status}).`), "assistant", { animate: true, sources: response.ok ? data.sources : [], searchError: response.ok ? data.searchError : "", reasoningSummary: response.ok && thinkMode ? data.reasoningSummary : "", reasoningSeconds: response.ok && thinkMode ? Math.max(1, Math.round((performance.now() - reasoningStartedAt) / 1000)) : 0 });
+      addMessage(response.ok ? data.reply : (data.userMessage || data.error || `The AI request failed (${response.status}).`), "assistant", { animate: true, sources: response.ok ? data.sources : [], searchError: response.ok ? data.searchError : "", reasoningSummary: response.ok && thinkMode ? data.reasoningSummary : "", reasoningSeconds: thinkMode ? Math.max(1, Math.round((performance.now() - reasoningStartedAt) / 1000)) : 0, thinkMode });
     } catch (error) {
       thinking.remove();
-      if (error.name === "AbortError") addMessage("The response was stopped by you.", "assistant", { animate: true });
-      else addMessage(`The AI service could not be reached. ${error?.message || "Please check the deployment and API configuration."}`, "assistant", { animate: true });
+      if (error.name === "AbortError") addMessage("The response was stopped by you.", "assistant", { animate: true, reasoningSeconds: thinkMode ? Math.max(1, Math.round((performance.now() - reasoningStartedAt) / 1000)) : 0, thinkMode });
+      else addMessage(`The AI service could not be reached. ${error?.message || "Please check the deployment and API configuration."}`, "assistant", { animate: true, reasoningSeconds: thinkMode ? Math.max(1, Math.round((performance.now() - reasoningStartedAt) / 1000)) : 0, thinkMode });
     } finally {
       window.clearTimeout(timeout);
       activeRequestController = null;
