@@ -32,6 +32,20 @@
   let editingArticle = null;
   let editBanner = null;
   let sidebarRebuilding = false;
+  let followChatBottom = true;
+  let smoothScrollTimer = 0;
+  const isChatNearBottom = (threshold = 120) => chatContent.scrollHeight - chatContent.scrollTop - chatContent.clientHeight <= threshold;
+  const scrollToLatest = ({ force = false, behavior = "auto" } = {}) => {
+    if (!force && !followChatBottom) return;
+    followChatBottom = true;
+    if (typeof chatContent.scrollTo === "function") chatContent.scrollTo({ top: chatContent.scrollHeight, behavior });
+    else chatContent.scrollTop = chatContent.scrollHeight;
+    if (behavior === "smooth") {
+      window.clearTimeout(smoothScrollTimer);
+      smoothScrollTimer = window.setTimeout(() => { followChatBottom = isChatNearBottom(); smoothScrollTimer = 0; }, 500);
+    }
+  };
+  chatContent.addEventListener("scroll", () => { if (!smoothScrollTimer) followChatBottom = isChatNearBottom(); }, { passive: true });
 
   const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (character) => ({
     "&": "&amp;",
@@ -46,6 +60,9 @@
   );
 
   const renderSimpleMarkdown = (value) => {
+    if (window.XmaniusCoreRenderer?.renderMarkdownToHtml) {
+      return window.XmaniusCoreRenderer.renderMarkdownToHtml(value);
+    }
     const lines = String(value || "").split(/\r?\n/);
     const output = [];
     let inCode = false;
@@ -269,6 +286,8 @@
     const stopCursor = () => assistant.querySelector(".xmanius-typing-cursor")?.remove();
     let answer = "";
     let approach = null;
+    const startedAt = performance.now();
+    const thinkEnabled = document.querySelector("[data-think-toggle]")?.classList.contains("active") === true;
 
     try {
       const response = await fetch("/api/xmanius-chat", {
@@ -277,7 +296,8 @@
         body: JSON.stringify({
           message: text,
           history,
-          mode: document.querySelector("[data-web-search].active") ? "research" : document.querySelector("[data-think-toggle].active") ? "deep_research" : "fast",
+          thinkMode: thinkEnabled,
+          webSearch: document.querySelector("[data-web-search]")?.classList.contains("active") === true,
         }),
       });
       if (!response.ok) throw new Error(`Request failed (${response.status})`);
@@ -285,15 +305,27 @@
         answer += delta;
         body.innerHTML = renderSimpleMarkdown(answer);
         appendCodeActions(assistant);
-        chatContent.scrollTop = chatContent.scrollHeight;
+        scrollToLatest();
       }, (value) => { approach = value; });
+      const summaryMatch = answer.match(/\[\[ANSWER_SUMMARY\]\]([\s\S]*?)\[\[\/ANSWER_SUMMARY\]\]/i);
+      const answerSummary = summaryMatch?.[1]?.trim() || "I checked the relevant context and assumptions before preparing the corrected answer.";
+      answer = answer.replace(/\[\[ANSWER_SUMMARY\]\][\s\S]*?\[\[\/ANSWER_SUMMARY\]\]/gi, "").replace(/\[\[\/?ANSWER_SUMMARY\]\]/gi, "").trim();
+      assistant.dataset.rawText = answer;
+      body.innerHTML = renderSimpleMarkdown(answer);
+      if (thinkEnabled) {
+        const details = document.createElement("details");
+        details.className = "thinking-summary";
+        details.innerHTML = `<summary><span class="thought-glyph" aria-hidden="true">✦</span><span>Thought for ${Math.max(1, Math.round((performance.now() - startedAt) / 1000))} seconds</span><span class="thought-chevron dropdown-chevron" aria-hidden="true"></span></summary><p></p>`;
+        details.querySelector("p").textContent = answerSummary;
+        assistant.prepend(details);
+      }
       stopCursor();
     } catch (error) {
       body.innerHTML = renderSimpleMarkdown(`The edited request could not be completed. ${error.message || "Please try again."}`);
       stopCursor();
     } finally {
       cancelEdit();
-      chatContent.scrollTop = chatContent.scrollHeight;
+      scrollToLatest();
     }
   };
 
@@ -332,7 +364,7 @@
     };
 
     chatContent.addEventListener("scroll", update, { passive: true });
-    button.addEventListener("click", () => chatContent.scrollTo({ top: chatContent.scrollHeight, behavior: "smooth" }));
+    button.addEventListener("click", () => scrollToLatest({ force: true, behavior: "smooth" }));
     new MutationObserver(update).observe(list, { childList: true, subtree: true });
     update();
   };
@@ -395,7 +427,7 @@
       body.dataset.rawText = `${current}${delta}`;
       body.innerHTML = renderSimpleMarkdown(body.dataset.rawText);
       appendCodeActions(article);
-      chatContent.scrollTop = chatContent.scrollHeight;
+      scrollToLatest();
     },
     finishAssistantMessage: (article, approach) => {
       article?.querySelector(".xmanius-typing-cursor")?.remove();
