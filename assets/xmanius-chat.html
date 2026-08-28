@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Xmanius Chat</title>
+  <link rel="stylesheet" href="css/xmanius-chat.css">
+</head>
+<body>
+  <div class="chat-app">
+    <aside class="chat-sidebar" id="sidebar">
+      <div class="sidebar-top"><a class="chat-logo" href="xmanius-ai.html">Xmanius</a><button class="icon-button" type="button" data-close-sidebar aria-label="Close sidebar">×</button></div>
+      <button class="new-chat" type="button" data-new-chat><span>＋</span> New chat</button>
+      <nav class="sidebar-nav" aria-label="Chat navigation"><button type="button"><span>⌕</span> Search</button><button type="button"><span>▣</span> Library</button><button type="button"><span>□</span> Projects</button><button type="button"><span>◷</span> Scheduled</button><button type="button"><span>⊙</span> More</button></nav>
+      <p class="sidebar-label">Pinned</p><button class="conversation pinned" type="button"><span class="conversation-icon">✺</span>Xmanius</button>
+      <p class="sidebar-label">Recents</p><div class="recent-list" data-recent-list><button class="conversation" type="button">Welcome to Xmanius</button><button class="conversation" type="button">Productivity ideas</button><button class="conversation" type="button">Coding questions</button><button class="conversation" type="button">Planning a project</button></div>
+      <div class="sidebar-account"><span class="avatar">A</span><span><b>Guest user</b><small>Xmanius account</small></span><span class="account-more">•••</span></div>
+    </aside>
+    <div class="chat-main">
+      <header class="chat-header"><button class="icon-button sidebar-open" type="button" data-open-sidebar aria-label="Open sidebar">☰</button><button class="model-name" type="button" data-model-menu>Xmanius 1 <span>⌄</span></button><button class="icon-button" type="button" aria-label="New conversation" data-new-chat>＋</button></header>
+      <main class="chat-content" id="chat-content"><section class="empty-state" data-empty-state><h1>Where should we begin?</h1><p>Ask Xmanius anything.</p></section><section class="message-list" data-message-list aria-live="polite"></section></main>
+      <form class="chat-composer" data-chat-form><button class="composer-icon" type="button" aria-label="Add attachment">＋</button><input class="chat-input" data-chat-input type="text" maxlength="1000" autocomplete="off" placeholder="Ask anything" aria-label="Ask Xmanius anything"><button class="composer-tool" type="button" data-think aria-label="Toggle think mode">♧ <span>Think</span></button><button class="composer-icon" type="button" data-chat-mic aria-label="Use voice input">♩</button><button class="send-button" type="submit" aria-label="Send message"><span>➤</span></button></form>
+      <p class="chat-disclaimer">Xmanius can make mistakes. Check important information.</p>
+    </div>
+  </div>
+  <script src="js/xmanius-chat.js" defer></script>
+</body>
+</html>

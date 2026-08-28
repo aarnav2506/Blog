@@ -12,8 +12,11 @@
     body { overflow-x:hidden; background:var(--bg); color:var(--ink); font:500 15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
     button { font:inherit; }
     .app { isolation:isolate; position:relative; display:grid; grid-template-rows:auto 1fr auto; min-height:100svh; padding:20px clamp(20px,5vw,72px) 28px; overflow:hidden; }
-    .app::before { content:""; z-index:-2; position:absolute; inset:0; background:radial-gradient(ellipse 42% 35% at 50% 38%,rgba(71,103,214,.18),transparent 72%),radial-gradient(ellipse 25% 24% at 50% 45%,rgba(114,224,255,.08),transparent 70%),linear-gradient(135deg,#070914,#04050a); }
-    .app::after { content:""; z-index:-1; position:absolute; inset:0; opacity:.26; background-image:linear-gradient(rgba(147,166,219,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(147,166,219,.07) 1px,transparent 1px); background-size:42px 42px; mask-image:radial-gradient(circle at 50% 45%,black,transparent 76%); }
+    .site-background-video { position:fixed; z-index:-3; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; pointer-events:none; background:#060811; }
+    .background-shade { z-index:-2; position:absolute; inset:0; pointer-events:none; background:linear-gradient(135deg,rgba(3,5,12,.48),rgba(4,5,10,.26) 48%,rgba(3,5,12,.58)); transition:opacity .28s ease; }
+    .background-shade.is-loop-fade { opacity:.82; transition-duration:.16s; }
+    .app::before { content:""; z-index:-1; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 55% 50% at 50% 40%,rgba(7,14,35,.08),rgba(3,5,12,.3) 78%); }
+    .app::after { display:none; }
     .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; }
     .brand { display:flex; gap:11px; align-items:center; letter-spacing:.16em; font-size:12px; font-weight:800; }
     .brand-mark { width:13px; height:13px; border-radius:50%; background:var(--cyan); box-shadow:0 0 0 5px rgba(109,229,255,.12),0 0 22px var(--cyan); }
@@ -46,12 +49,17 @@
     .notice.show { opacity:1; }
     @keyframes spin { to { transform:rotate(360deg); } }
     @keyframes micPulse { 50% { transform:scale(1.07); box-shadow:0 0 0 13px rgba(116,185,255,.08),0 12px 35px rgba(74,159,255,.44); } }
+    @media (max-width:780px) { .site-background-video { display:none; } }
     @media (max-width:600px) { .app { padding:18px 18px 24px; } .connection { font-size:10px; } .orb-stage { width:min(78vw,355px); } main { align-content:start; padding-top:32px; } .prompts { grid-template-columns:1fr; margin-top:24px; } .prompt { min-height:0; padding:13px 15px; } h1 { min-height:3.7em; } }
-    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+    @media (prefers-reduced-motion:reduce) { .site-background-video { display:none; } *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
   </style>
 </head>
 <body>
   <div class="app">
+    <video class="site-background-video" id="siteBackgroundVideo" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+      <source src="video/portfolio-background.mp4" type="video/mp4">
+    </video>
+    <div class="background-shade" id="backgroundShade" aria-hidden="true"></div>
     <header class="topbar"><div class="brand"><span class="brand-mark"></span>JARVIS</div><div class="connection"><i></i>Voice interface ready</div></header>
     <main>
       <div class="orb-stage"><canvas id="orb" aria-label="Animated Jarvis voice orb"></canvas><div class="state-pill" id="state">Ready to listen</div></div>
@@ -84,6 +92,17 @@
   mic.addEventListener("click",()=>app.listening?reset(true):listen()); close.addEventListener("click",()=>{ reset(); toast("Conversation stopped."); }); document.querySelectorAll(".prompt").forEach(b=>b.addEventListener("click",()=>answer(b.dataset.question)));
   function ambient() { const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return toast("Ambient sound is unavailable in this browser."); if(!app.audio) { app.audio=new Ctx(); app.gain=app.audio.createGain(); app.gain.gain.value=.025; app.gain.connect(app.audio.destination); [174,261].forEach((f,i)=>{ const o=app.audio.createOscillator(), g=app.audio.createGain(); o.type=i?"sine":"triangle"; o.frequency.value=f; g.gain.value=i?.38:.18; o.connect(g).connect(app.gain); o.start(); }); } app.audio.resume(); app.ambient=!app.ambient; app.gain.gain.setTargetAtTime(app.ambient?.025:0,app.audio.currentTime,.08); sound.classList.toggle("active",app.ambient); sound.setAttribute("aria-pressed",String(app.ambient)); sound.setAttribute("aria-label",app.ambient?"Turn ambient sound off":"Turn ambient sound on"); toast(app.ambient?"Ambient sound on.":"Ambient sound off."); }
   sound.addEventListener("click",ambient); window.addEventListener("beforeunload",()=>reset(true));
+  const backgroundVideo=$("siteBackgroundVideo"), backgroundShade=$("backgroundShade");
+  const desktopVideoEnabled=matchMedia("(min-width: 781px) and (prefers-reduced-motion: no-preference)").matches;
+  if(backgroundVideo && desktopVideoEnabled) {
+    let wasNearLoop=false;
+    backgroundVideo.play().catch(()=>{});
+    backgroundVideo.addEventListener("timeupdate",()=>{
+      if(backgroundVideo.duration && backgroundVideo.currentTime > backgroundVideo.duration-.18 && !wasNearLoop) { wasNearLoop=true; backgroundShade?.classList.add("is-loop-fade"); }
+      if(wasNearLoop && backgroundVideo.currentTime < .18) { wasNearLoop=false; backgroundShade?.classList.remove("is-loop-fade"); }
+    });
+    document.addEventListener("visibilitychange",()=>{ if(document.hidden) backgroundVideo.pause(); else backgroundVideo.play().catch(()=>{}); });
+  }
   const canvas=$("orb"), ctx=canvas.getContext("2d"), dots=Array.from({length:760},(_,i)=>{const y=1-i/759*2,r=Math.sqrt(1-y*y),a=i*2.399963;return {x:Math.cos(a)*r,y,z:Math.sin(a)*r,p:Math.random()*6.28};}); let w,h,dpr;
   function resize(){dpr=Math.min(devicePixelRatio||1,2);w=canvas.clientWidth;h=canvas.clientHeight;canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);} addEventListener("resize",resize); resize();
   function draw(t){ctx.clearRect(0,0,w,h); app.level+=(app.target-app.level)*.055; const l=app.level+.035*Math.sin(t*.002), c=w/2, cy=h/2, R=w*.29, rot=t*.00022; const g=ctx.createRadialGradient(c,cy,0,c,cy,R*1.75);g.addColorStop(0,`rgba(120,220,255,${.10+l*.16})`);g.addColorStop(.45,"rgba(93,126,255,.08)");g.addColorStop(1,"rgba(30,50,120,0)");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation="lighter"; for(const p of dots){let x=p.x*Math.cos(rot)-p.z*Math.sin(rot),z=p.x*Math.sin(rot)+p.z*Math.cos(rot),y=p.y;const pulse=1+l*.27+Math.sin(t*.0025+p.p)*(.018+l*.03),k=1/(2.8+z);ctx.fillStyle=`rgba(${z>0?160:92},${z>0?230:172},255,${.16+k*.58})`;ctx.beginPath();ctx.arc(c+x*R*pulse*k*2.8,cy+y*R*pulse*k*2.8,Math.max(.45,k*3),0,7);ctx.fill();}ctx.globalCompositeOperation="source-over";requestAnimationFrame(draw);} requestAnimationFrame(draw);
